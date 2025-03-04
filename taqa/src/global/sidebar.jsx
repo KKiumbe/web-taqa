@@ -22,11 +22,13 @@ import {
   Chat,
   Send,
   MonetizationOn,
-  Assignment,
+  Assignment,ReceiptLong
+ 
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import BusinessIcon from "@mui/icons-material/Business";
+
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -52,11 +54,11 @@ const Sidebar = () => {
     <Drawer
       variant="permanent"
       sx={{
-        width: open ? 205 : 50, // Thinner: 100px open, 50px collapsed
+        width: open ? 205 : 50,
         transition: "width 0.3s",
         "& .MuiDrawer-paper": {
-          width: open ? 205 : 50, // Ensure paper matches
-          overflowX: "hidden", // Prevent horizontal scroll
+          width: open ? 205 : 50,
+          overflowX: "hidden",
         },
       }}
     >
@@ -148,7 +150,7 @@ const Sidebar = () => {
             </ListItem>
             <ListItem button sx={{ pl: 3, py: 0.5 }} onClick={() => navigate("/receipts")}>
               <ListItemIcon sx={{ minWidth: 30 }}>
-                <ReceiptLongIcon sx={{ fontSize: 20 }} />
+                <ReceiptLong sx={{ fontSize: 20 }} />
               </ListItemIcon>
               {open && <ListItemText primary="Receipts" sx={{ fontSize: "0.8rem" }} />}
             </ListItem>
@@ -225,6 +227,23 @@ const Sidebar = () => {
           {open && <ListItemText primary="Settings" sx={{ fontSize: "0.9rem" }} />}
           {open && (submenuOpen.settings ? <ExpandLess /> : <ExpandMore />)}
         </ListItem>
+        <Collapse in={submenuOpen.settings} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItem button sx={{ pl: 3, py: 0.5 }} onClick={() => navigate("/users")}>
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                <Person sx={{ fontSize: 20 }} />
+              </ListItemIcon>
+              {open && <ListItemText primary="Users" sx={{ fontSize: "0.8rem" }} />}
+            </ListItem>
+
+            <ListItem button sx={{ pl: 3, py: 0.5 }} onClick={() => navigate("/org-details")}>
+  <ListItemIcon sx={{ minWidth: 30 }}>
+    <BusinessIcon sx={{ fontSize: 20 }} />
+  </ListItemIcon>
+  {open && <ListItemText primary="Org details" sx={{ fontSize: "0.8rem" }} />}
+</ListItem>
+          </List>
+        </Collapse>
       </List>
     </Drawer>
   );

@@ -33,6 +33,15 @@ import SendBillsScreen from "./pages/sendBills";
 import DebtManager from "./pages/debtManager";
 import ReportScreen from "./pages/reports";
 import ComingSoonPage from "./pages/comingSoon";
+import CustomerEditScreen from "./pages/editCustomers";
+import ForgotPasswordScreen from "./pages/forgotPassword";
+import ChangePasswordScreen from "./pages/ChangePasswordScreen";
+import VerifyOtpScreen from "./pages/VerifyOtpScreen";
+import UserManagementScreen from "./pages/users";
+import UserDetails from "./pages/userDetails";
+import AddUser from "./pages/addUser";
+import Organization from "./pages/orgDetails";
+import EditOrganization from "./pages/editOrg";
 
 
 
@@ -49,8 +58,11 @@ const App = () => {
         <Box sx={{ flexGrow: 1 }}>
           {isAuthenticated && <Navbar/>}
           <Routes>
+          
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
+            <Route path="/reset-password" element={<ForgotPasswordScreen />} />
+            <Route path="/change-password" element={<ChangePasswordScreen />} />
+            <Route path="/verify-otp" element={<VerifyOtpScreen />} />
             <Route
               path="/"
               element={
@@ -228,6 +240,67 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <ComingSoonPage/>
+               
+                </ProtectedRoute>
+              }
+            /> 
+
+<Route
+              path="/customer-edit/:id"
+              element={
+                <ProtectedRoute>
+                  <CustomerEditScreen/>
+               
+                </ProtectedRoute>
+              }
+            /> 
+
+
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <UserManagementScreen/>
+               
+                </ProtectedRoute>
+              }
+            /> 
+
+              <Route
+              path="/add-user"
+              element={
+                <ProtectedRoute>
+                  <AddUser/>
+               
+                </ProtectedRoute>
+              }
+            /> 
+
+              <Route
+              path="/user/:id"
+              element={
+                <ProtectedRoute>
+                  <UserDetails/>
+               
+                </ProtectedRoute>
+              }
+            /> 
+
+<Route
+              path="/org-details"
+              element={
+                <ProtectedRoute>
+                  <Organization/>
+               
+                </ProtectedRoute>
+              }
+            /> 
+
+<Route
+              path="/organization/edit"
+              element={
+                <ProtectedRoute>
+                  <EditOrganization/>
                
                 </ProtectedRoute>
               }

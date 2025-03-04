@@ -86,7 +86,7 @@ const SentSMSPage = () => {
     >
 
        
-              <Typography
+              <Typography component="div"
                 variant="h4"
                 sx={{ color: theme.palette.primary.contrastText, mb: 2 , ml:-5}} // Primary color for title
               >

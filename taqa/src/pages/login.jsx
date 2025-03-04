@@ -48,7 +48,7 @@ const Login = () => {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        backgroundColor: theme.primary, ml:65 // Apply theme color
+      ml:65 // Apply theme color
       }}
     >
       <Paper elevation={3} sx={{ p: 4, maxWidth: 400, width: "100%", textAlign: "center" }}>
@@ -63,6 +63,7 @@ const Login = () => {
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             required
+            sx={{backgroundColor:theme.palette.primary.dark , color:theme.palette.primary.contrastText}}
           />
 
           <TextField
@@ -74,6 +75,7 @@ const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
+            sx={{backgroundColor:theme.palette.primary.dark , color:theme.palette.primary.contrastText}}
           />
 
           <Button
@@ -87,14 +89,9 @@ const Login = () => {
         </Box>
 
         <Box mt={2}>
-          <Typography variant="body2">
-            Don't have an account?{" "}
-            <Link to="/signup" style={{ textDecoration: "none", color: "#1976d2" }}>
-              Sign up
-            </Link>
-          </Typography>
+        
           <Typography variant="body2" mt={1}>
-            <Link to="/forgot-password" style={{ textDecoration: "none", color: "#1976d2" }}>
+            <Link to="/reset-password" style={{ textDecoration: "none", color: "#1976d2" }}>
               Forgot password?
             </Link>
           </Typography>

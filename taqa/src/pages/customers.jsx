@@ -19,6 +19,7 @@ import TitleComponent from "../components/title";
 import { getTheme } from "../store/theme";
 import { Link, useNavigate } from "react-router-dom";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
 import { useAuthStore } from "../store/authStore";
 
 const BASEURL = import.meta.env.VITE_BASE_URL;
@@ -114,6 +115,16 @@ const CustomersScreen = () => {
         </IconButton>
       ),
     },
+    {
+      field: "edit",
+      headerName: "Edit",
+      width: 100,
+      renderCell: (params) => (
+        <IconButton component={Link} to={`/customer-edit/${params.row.id}`}  color="theme.palette.greenAccent.main">
+          <EditIcon />
+        </IconButton>
+      ),
+    },
     { field: "firstName", headerName: "First Name", width: 150 },
     { field: "lastName", headerName: "Last Name", width: 150 },
     { field: "closingBalance", headerName: "Closing Balance", width: 100 },
@@ -131,7 +142,7 @@ const CustomersScreen = () => {
 
   return (
     <Box sx={{ padding: 3, ml: 20 }}>
-      <Typography variant="h5" gutterBottom sx={{ padding: 3, ml: 5 }}>
+      <Typography component="div" variant="h5" gutterBottom sx={{ padding: 3, ml: 5 }}>
         <TitleComponent title="Customers" />
       </Typography>
 

@@ -290,7 +290,7 @@ const handleSearch = () => {
             overflow: "hidden",
           }}
         >
-          <Typography sx={{ padding: 3, ml: 5 }}>
+          <Typography component="div" sx={{ padding: 3, ml: 5 }}>
             <TitleComponent title="Invoices" />
           </Typography>
 

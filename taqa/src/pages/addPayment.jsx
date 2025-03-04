@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -17,147 +17,120 @@ import { useAuthStore } from "../store/authStore";
 import TitleComponent from "../components/title";
 import axios from "axios";
 import { getTheme } from "../store/theme";
+import debounce from "lodash/debounce";
 
 const CreatePayment = () => {
+  const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const BASEURL = import.meta.env.VITE_BASE_URL; // Fallback URL
+  const theme = getTheme();
+
+  // State management
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [totalAmount, setTotalAmount] = useState("");
-  const [modeOfPayment, setModeOfPayment] = useState("");
+  const [formData, setFormData] = useState({ totalAmount: "", modeOfPayment: "" });
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
   const [isPhoneSearch, setIsPhoneSearch] = useState(false);
-  const [searchPerformed, setSearchPerformed] = useState(false);
 
-  const BASEURL = import.meta.env.VITE_BASE_URL;
-  const currentUser = useAuthStore((state) => state.currentUser);
-  const navigate = useNavigate();
-  const theme = getTheme();
-
+  // Redirect to login if not authenticated
   useEffect(() => {
-    if (!currentUser) {
-      navigate("/login");
-    }
+    if (!currentUser) navigate("/login");
   }, [currentUser, navigate]);
 
-  const handleSearch = async () => {
-    setIsSearching(true);
-    setSearchPerformed(true);
-    if (!searchQuery.trim()) {
+  // Unified search handler
+  const handleSearch = async (query) => {
+    const trimmedQuery = (query || "").trim();
+    if (!trimmedQuery) {
       setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
-
-    try {
-      const isPhoneNumber = /^\d+$/.test(searchQuery);
-      let response;
-
-      if (isPhoneNumber) {
-        if (searchQuery.length < 10) {
-          setSnackbarMessage("Please enter at least 10 digits for phone search");
-          setSnackbarOpen(true);
-          setSearchResults([]);
-          setIsSearching(false);
-          return;
-        }
-        response = await axios.get(`${BASEURL}/search-customer-by-phone`, {
-          params: { phone: searchQuery },
-          withCredentials: true,
-        });
-        console.log("Phone search response:", response.data);
-        const customer = response.data;
-        setSearchResults(customer ? [customer] : []);
-      } else {
-        response = await axios.get(`${BASEURL}/search-customers-by-name`, {
-          params: { name: searchQuery },
-          withCredentials: true,
-        });
-        console.log("Name search response:", response.data);
-        const results = Array.isArray(response.data) ? response.data : [];
-        setSearchResults(results);
-      }
-    } catch (error) {
-      console.error("Error searching customers:", error.response);
-      if (error.response && error.response.status === 404) {
-        setSnackbarMessage(
-          error.response.data.message || "No customer found"
-        );
-      } else {
-        setSnackbarMessage("Error searching customers.");
-      }
-      setSearchResults([]);
-      setSnackbarOpen(true);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleNameSearch = async (value) => {
-    if (/^\d+$/.test(value)) {
-      setIsPhoneSearch(true);
-      setSearchResults([]);
-      setSearchQuery(value);
-      setSearchPerformed(false);
       return;
     }
 
     setIsSearching(true);
-    if (!value.trim()) {
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
+    const isPhoneNumber = /^\d+$/.test(trimmedQuery);
 
     try {
-      const response = await axios.get(`${BASEURL}/search-customers-by-name`, {
-        params: { name: value },
-        withCredentials: true,
-      });
-      console.log("Name search response:", response.data);
-      const results = Array.isArray(response.data) ? response.data : [];
+      const url = isPhoneNumber 
+        ? `${BASEURL}/search-customer-by-phone` 
+        : `${BASEURL}/search-customer-by-name`;
+      const params = isPhoneNumber ? { phone: trimmedQuery } : { name: trimmedQuery };
+
+      if (isPhoneNumber && trimmedQuery.length < 10) {
+        setSearchResults([]);
+        return;
+      }
+
+      const response = await axios.get(url, { params, withCredentials: true });
+      const results = isPhoneNumber 
+        ? response.data ? [response.data] : [] 
+        : Array.isArray(response.data) ? response.data : [];
+      
       setSearchResults(results);
-    } catch (error) {
-      console.error("Error searching customers:", error.response);
-      if (error.response && error.response.status === 404) {
-        setSnackbarMessage(
-          error.response.data.message || "No customer found"
-        );
-      } else {
-        setSnackbarMessage("Error searching customers.");
+      if (!results.length) {
+        setSnackbar({
+          open: true,
+          message: isPhoneNumber ? "No customer found with that phone number" : "No customer found with that name",
+          severity: "info",
+        });
       }
+    } catch (error) {
+      console.error("Search error:", error.message);
+      setSnackbar({
+        open: true,
+        message: error.code === "ERR_NETWORK" 
+          ? "Server not reachable. Please check if the backend is running."
+          : error.response?.status === 404 
+            ? (isPhoneNumber ? "No customer found with that phone number" : "No customer found with that name")
+            : "Error searching customers: " + (error.response?.data?.message || error.message),
+        severity: "error",
+      });
       setSearchResults([]);
-      setSnackbarOpen(true);
     } finally {
       setIsSearching(false);
     }
   };
 
+  // Debounced phone search
+  const debouncedPhoneSearch = useCallback(
+    debounce((query) => handleSearch(query), 500),
+    []
+  );
+
+  // Handle input change
+  const handleInputChange = (e, value) => {
+    const newValue = e?.target?.value ?? value ?? "";
+    setSearchQuery(newValue);
+    setIsPhoneSearch(/^\d+$/.test(newValue));
+    setSelectedCustomer(null);
+
+    if (isPhoneSearch) {
+      debouncedPhoneSearch(newValue);
+    } else {
+      handleSearch(newValue);
+    }
+  };
+
+  // Handle customer selection
   const handleCustomerSelect = (event, newValue) => {
     setSelectedCustomer(newValue);
-    setSearchQuery("");
-    setSearchResults([]);
-    setSearchPerformed(false);
-  };
-
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    const isNumeric = /^\d+$/.test(value);
-    setIsPhoneSearch(isNumeric);
-    setSearchPerformed(false);
-    setSearchResults([]);
-    if (isNumeric !== isPhoneSearch) {
-      setSelectedCustomer(null);
+    if (newValue) {
+      setSearchQuery("");
+      setSearchResults([]);
     }
   };
 
+  // Handle form field changes
+  const handleFormChange = (field) => (e) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  // Submit payment
   const handlePaymentSubmit = async () => {
+    const { totalAmount, modeOfPayment } = formData;
     if (!selectedCustomer || !totalAmount || !modeOfPayment) {
-      setSnackbarMessage("Please fill all payment details.");
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: "Please fill all payment details", severity: "error" });
       return;
     }
 
@@ -170,108 +143,86 @@ const CreatePayment = () => {
 
     setIsProcessing(true);
     try {
-      const response = await axios.post(`${BASEURL}/manual-cash-payment`, payload, {
-        withCredentials: true,
-      });
-
-      console.log(`this is the new payment ${JSON.stringify(response)}`);
-      setSnackbarMessage("Payment created successfully.");
-      setSnackbarOpen(true);
+      const response = await axios.post(`${BASEURL}/manual-cash-payment`, payload, { withCredentials: true });
+      setSnackbar({ open: true, message: "Payment created successfully", severity: "success" });
       setSelectedCustomer(null);
-      setTotalAmount("");
-      setModeOfPayment("");
-      navigate(`/payments`);
+      setFormData({ totalAmount: "", modeOfPayment: "" });
+      setTimeout(() => navigate("/payments"), 2000);
     } catch (error) {
-      console.error("Error creating payment:", error);
-      setSnackbarMessage("Error creating payment.");
-      setSnackbarOpen(true);
+      console.error("Payment error:", error);
+      setSnackbar({
+        open: true,
+        message: "Error creating payment: " + (error.response?.data?.message || error.message),
+        severity: "error",
+      });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleSnackbarClose = () => setSnackbarOpen(false);
+  // Render phone search results
+  const renderPhoneSearchResults = () => (
+    searchResults.length > 0 && (
+      <Box sx={{ mt: 2 }}>
+        {searchResults.map((customer) => (
+          <Box
+            key={customer.id}
+            sx={{ p: 1, cursor: "pointer", "&:hover": { bgcolor: theme.palette.grey[800] } }}
+            onClick={() => handleCustomerSelect(null, customer)}
+          >
+            <Typography sx={{ color: theme.palette.grey[100] }}>
+              {`${customer.firstName || "Unknown"} ${customer.lastName || ""} (${customer.phoneNumber || "N/A"})`}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    )
+  );
 
   return (
-    <Box
-      sx={{
-        maxWidth: 700,
-        mx: "auto",
-        p: 3,
-        mt: 2,
-        bgcolor: theme.palette.primary.main,
-        borderRadius: 2,
-        boxShadow: 3,
-        ml: 60,
-      }}
-    >
+    <Box sx={{ maxWidth: 700, mx: "auto", p: 3, mt: 2, ml: 60 }}>
       <TitleComponent title="Create Payment" />
-      <Paper sx={{ p: 3, bgcolor: theme.palette.primary.main, color: theme.palette.grey[100]}}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+      <Paper sx={{ p: 3, bgcolor: theme.palette.primary.main }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2, color: theme.palette.grey[100] }}>
           Search Customer
         </Typography>
+        
         {isPhoneSearch ? (
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            <TextField
-              label="Search by Phone"
-              variant="outlined"
-              value={searchQuery}
-              onChange={handleInputChange}
-              fullWidth
-              disabled={isSearching}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: theme.palette.grey[300] },
-                  "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },
-                  "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main },
-                },
-                "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
-                "& .MuiInputBase-input": { color: theme.palette.grey[100] },
-              }}
-            />
-            {searchQuery.length >= 10 && (
-              <Button
-                variant="contained"
-                onClick={handleSearch}
-                disabled={isSearching}
-                sx={{
-                  bgcolor: theme.palette.greenAccent.main,
-                  color: "#fff",
-                  "&:hover": { bgcolor: theme.palette.greenAccent.main, opacity: 0.9 },
-                }}
-              >
-                {isSearching ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Search"}
-              </Button>
-            )}
-          </Box>
+          <TextField
+            label="Search by Phone"
+            variant="outlined"
+            value={searchQuery}
+            onChange={handleInputChange}
+            fullWidth
+            disabled={isSearching}
+            inputProps={{ maxLength: 15 }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { borderColor: theme.palette.grey[300] },
+                "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },
+                "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main },
+              },
+              "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
+              "& .MuiInputBase-input": { color: theme.palette.grey[100] },
+              mb: 2,
+            }}
+          />
         ) : (
           <Autocomplete
             freeSolo
             options={searchResults}
-            getOptionLabel={(option) =>
-              `${option.firstName || "Unknown"} ${option.lastName || ""} (${option.phoneNumber || "N/A"})`
-            }
+            getOptionLabel={(option) => `${option.firstName || "Unknown"} ${option.lastName || ""} (${option.phoneNumber || "N/A"})`}
             onChange={handleCustomerSelect}
-            onInputChange={(event, value) => {
-              setSearchQuery(value);
-              handleNameSearch(value);
-            }}
+            onInputChange={handleInputChange}
             loading={isSearching}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Search by Name"
                 variant="outlined"
-                value={searchQuery}
-                onChange={handleInputChange}
                 InputProps={{
                   ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {isSearching ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
+                  endAdornment: isSearching ? <CircularProgress size={20} /> : params.InputProps.endAdornment,
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -288,37 +239,11 @@ const CreatePayment = () => {
           />
         )}
 
-        {isPhoneSearch && searchPerformed && searchResults.length > 0 && (
-          <Box sx={{ mt: 2 }}>
-            {searchResults.map((customer) => (
-              <Box
-                key={customer.id}
-                sx={{
-                  p: 1,
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: theme.palette.grey[800] },
-                }}
-                onClick={() => handleCustomerSelect(null, customer)}
-              >
-                <Typography sx={{ color: theme.palette.grey[100] }}>
-                  {`${customer.firstName || "Unknown"} ${customer.lastName || ""} (${customer.phoneNumber || "N/A"})`}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        )}
-
-        {isPhoneSearch && searchPerformed && searchResults.length === 0 && !isSearching && (
-          <Box sx={{ mt: 2 }}>
-            <Typography sx={{ color: theme.palette.grey[100] }}>
-              No customer found with phone number: {searchQuery}
-            </Typography>
-          </Box>
-        )}
+        {isPhoneSearch && renderPhoneSearchResults()}
 
         {selectedCustomer && (
           <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            <Typography variant="h6" gutterBottom sx={{ mb: 2, color: theme.palette.grey[100] }}>
               Payment Details
             </Typography>
             <Grid container spacing={2}>
@@ -332,18 +257,10 @@ const CreatePayment = () => {
                   label="Amount (KES)"
                   variant="outlined"
                   type="number"
-                  value={totalAmount}
-                  onChange={(e) => setTotalAmount(e.target.value)}
+                  value={formData.totalAmount}
+                  onChange={handleFormChange("totalAmount")}
                   fullWidth
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": { borderColor: theme.palette.grey[300] },
-                      "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },
-                      "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main },
-                    },
-                    "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
-                    "& .MuiInputBase-input": { color: theme.palette.grey[100] },
-                  }}
+                  sx={{ "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: theme.palette.grey[300] }, "&:hover fieldset": { borderColor: theme.palette.greenAccent.main }, "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main } }, "& .MuiInputLabel-root": { color: theme.palette.grey[100] }, "& .MuiInputBase-input": { color: theme.palette.grey[100] } }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -351,24 +268,13 @@ const CreatePayment = () => {
                   select
                   label="Mode of Payment"
                   variant="outlined"
-                  value={modeOfPayment}
-                  onChange={(e) => setModeOfPayment(e.target.value)}
+                  value={formData.modeOfPayment}
+                  onChange={handleFormChange("modeOfPayment")}
                   fullWidth
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      "& fieldset": { borderColor: theme.palette.grey[300] },
-                      "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },
-                      "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main },
-                    },
-                    "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
-                    "& .MuiInputBase-input": { color: theme.palette.grey[100] },
-                    "& .MuiMenuItem-root": { color: theme.palette.grey[100] },
-                  }}
+                  sx={{ "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: theme.palette.grey[300] }, "&:hover fieldset": { borderColor: theme.palette.greenAccent.main }, "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main } }, "& .MuiInputLabel-root": { color: theme.palette.grey[100] }, "& .MuiInputBase-input": { color: theme.palette.grey[100] } }}
                 >
                   {["CASH", "MPESA", "BANK_TRANSFER", "CREDIT_CARD", "DEBIT_CARD"].map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
+                    <MenuItem key={option} value={option} sx={{ color: theme.palette.grey[100] }}>{option}</MenuItem>
                   ))}
                 </TextField>
               </Grid>
@@ -378,14 +284,7 @@ const CreatePayment = () => {
                   onClick={handlePaymentSubmit}
                   disabled={isProcessing}
                   fullWidth
-                  sx={{
-                    bgcolor: theme.palette.greenAccent.main,
-                    color: "#fff",
-                    "&:hover": { bgcolor: theme.palette.greenAccent.main, opacity: 0.9 },
-                    "&:disabled": { bgcolor: theme.palette.grey[300], color: theme.palette.grey[100] },
-                    borderRadius: 20,
-                    py: 1.5,
-                  }}
+                  sx={{ bgcolor: theme.palette.greenAccent.main, color: "#fff", "&:hover": { bgcolor: theme.palette.greenAccent.main, opacity: 0.9 }, "&:disabled": { bgcolor: theme.palette.grey[300] }, borderRadius: 20, py: 1.5 }}
                 >
                   {isProcessing ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Submit Payment"}
                 </Button>
@@ -393,22 +292,18 @@ const CreatePayment = () => {
             </Grid>
           </Box>
         )}
-      </Paper>
 
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbarMessage.includes("successfully") ? "success" : "error"}
-          sx={{ width: "100%", bgcolor: theme.palette.grey[300], color: theme.palette.grey[100] }}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+          <Alert severity={snackbar.severity} sx={{ width: "100%", bgcolor: theme.palette.grey[300], color: theme.palette.grey[100] }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Paper>
     </Box>
   );
 };
