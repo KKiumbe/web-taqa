@@ -271,11 +271,16 @@ const Navbar = () => {
           ) : (
             <>
               <ListItem>
+              <ListItemText
+                 
+                  primary={`${currentUser.tenant?.name || "Unknown"} `}
+                />
+              </ListItem>
                 <ListItemText
                   primary="Name"
                   secondary={`${currentUser.firstName || "Unknown"} ${currentUser.lastName || ""}`}
                 />
-              </ListItem>
+            
               <ListItem>
                 <ListItemText primary="Email" secondary={currentUser.email || "N/A"} />
               </ListItem>
