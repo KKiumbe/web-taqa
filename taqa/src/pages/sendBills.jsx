@@ -20,7 +20,7 @@ import {
 import { getTheme } from '../store/theme';
 import TitleComponent from '../components/title';
 
-const BASEURL = import.meta.env.VITE_BASE_URL;
+const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 const theme = getTheme();
 
 // Days of the week options

@@ -64,7 +64,7 @@ const Receipts = () => {
 
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
-  const BASEURL = import.meta.env.VITE_BASE_URL;
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = getTheme();
 
   useEffect(() => {

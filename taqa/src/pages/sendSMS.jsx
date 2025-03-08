@@ -24,7 +24,7 @@ function SmsScreen() {
 
 
   const daysOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-  const BASEURL = import.meta.env.VITE_BASE_URL;
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = getTheme();
 
   const resetFields = () => {

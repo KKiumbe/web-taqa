@@ -19,10 +19,10 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import TitleComponent from "../components/title";
 import { useAuthStore } from "../store/authStore";
-
+const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 const UserDetails = () => {
   const { id } = useParams();
-  const BASEURL = import.meta.env.VITE_BASE_URL;
+  
   const theme = useTheme();
   const { currentUser } = useAuthStore();
 

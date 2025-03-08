@@ -22,7 +22,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import { useAuthStore } from "../store/authStore";
 
-const BASEURL = import.meta.env.VITE_BASE_URL;
+const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 const theme = getTheme();
 
 const CustomersScreen = () => {

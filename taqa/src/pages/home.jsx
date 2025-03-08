@@ -11,7 +11,7 @@ import PieChartComponent from "../components/pieChart";
 import LastPayments from "../components/payments";
 import PaymentModesPieChart from "../components/paymentsChart";
 
-const BASEURL = import.meta.env.VITE_BASE_URL;
+const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
 const HomeScreen = () => {
   const [dashboardStats, setDashboardStats] = useState(null);

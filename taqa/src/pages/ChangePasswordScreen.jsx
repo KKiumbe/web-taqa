@@ -26,7 +26,7 @@ const ChangePasswordScreen = () => {
   });
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  const BASEURL = import.meta.env.VITE_BASE_URL;
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
    const theme = getTheme();
   const handleInputChange = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));

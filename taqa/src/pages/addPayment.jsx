@@ -22,7 +22,7 @@ import debounce from "lodash/debounce";
 const CreatePayment = () => {
   const navigate = useNavigate();
   const currentUser = useAuthStore((state) => state.currentUser);
-  const BASEURL = import.meta.env.VITE_BASE_URL; // Fallback URL
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = getTheme();
 
   // State management
