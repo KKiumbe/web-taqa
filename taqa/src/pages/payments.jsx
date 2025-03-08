@@ -67,6 +67,7 @@ const Payments = () => {
 
   // Fetch all payments or only unreceipted payments based on filter
   const fetchAllPayments = async (page, pageSize, unreceiptedOnly = false) => {
+    
     setLoading(true);
     setError(null);
     try {
