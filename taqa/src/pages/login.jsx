@@ -15,7 +15,8 @@ const Login = () => {
   //const currentUser = useAuthStore((state) => state.currentUser);
   const theme = getTheme();
 
-  const BASEURL = import.meta.env.VITE_BASE_URL;
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+
 
   // useEffect(() => {
   //   if (currentUser) {
