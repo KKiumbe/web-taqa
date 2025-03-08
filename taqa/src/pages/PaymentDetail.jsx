@@ -46,12 +46,12 @@ const PaymentDetails = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("error");
-  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
   const theme = getTheme();
-
+  const BASEURL = "https://taqa.co.ke/api";
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");

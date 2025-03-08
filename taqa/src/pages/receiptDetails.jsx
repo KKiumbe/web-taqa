@@ -27,10 +27,10 @@ const ReceiptDetail = () => {
   const [receipt, setReceipt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   // Safely access theme with fallback
   const theme = getTheme();
-  
+  const BASEURL = "https://taqa.co.ke/api";
 
   useEffect(() => {
     const fetchReceipt = async () => {

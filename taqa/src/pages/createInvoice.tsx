@@ -22,7 +22,7 @@ const CreateInvoice = () => {
   const navigate = useNavigate();
   const theme = getTheme();
   const currentUser = useAuthStore((state) => state.currentUser);
-  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+
 
   // State management
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,6 +34,7 @@ const CreateInvoice = () => {
   const [loading, setLoading] = useState(false);
   const [isPhoneSearch, setIsPhoneSearch] = useState(false);
 
+  const BASEURL = "https://taqa.co.ke/api";
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!currentUser) navigate("/login");

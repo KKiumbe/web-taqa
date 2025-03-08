@@ -8,7 +8,8 @@ const SignUp = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const setUser = useAuthStore((state) => state.setUser);
-  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  const BASEURL = "https://taqa.co.ke/api";
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };

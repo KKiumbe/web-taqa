@@ -35,7 +35,8 @@ export default function InvoiceList() {
 
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
-  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  const BASEURL = "https://taqa.co.ke/api";
   const theme = getTheme();
 
   // Fetch all invoices

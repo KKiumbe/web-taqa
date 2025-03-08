@@ -13,8 +13,9 @@ const SentSMSPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = getTheme();
+  const BASEURL = "https://taqa.co.ke/api";
 
   const fetchSmsMessages = async () => {
     setLoading(true);

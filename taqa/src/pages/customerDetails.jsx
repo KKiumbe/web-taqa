@@ -22,7 +22,8 @@ const CustomerDetails = () => {
   const [sending, setSending] = useState(false);
 
   const [error, setError] = useState(null); // <-- Added error state
-  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  const BASEURL = "https://taqa.co.ke/api";
   const theme = getTheme();
 
   const currentUser = useAuthStore((state) => state.currentUser);

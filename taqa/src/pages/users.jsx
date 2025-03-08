@@ -23,9 +23,9 @@ const UserManagementScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const navigate = useNavigate();
-
+  const BASEURL = "https://taqa.co.ke/api";
   useEffect(() => {
     const fetchUsers = async () => {
       try {
