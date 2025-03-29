@@ -18,8 +18,7 @@ import TitleComponent from "../components/title";
 import { useAuthStore } from "../store/authStore";
 
 const EditOrganization = () => {
-  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-  const BASEURL = "https://taqa.co.ke/api";
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = useTheme();
   const navigate = useNavigate();
   const { currentUser } = useAuthStore();

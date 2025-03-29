@@ -10,7 +10,7 @@ export default function AddCustomer() {
   const { darkMode } = useThemeStore();
   const theme = getTheme(darkMode ? "dark" : "light");
   //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-  const BASEURL = "https://taqa.co.ke/api";
+  const BASEURL = import.meta.env.VITE_BASE_URL
   const currentUser = useAuthStore((state) => state.currentUser);
 
 

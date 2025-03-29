@@ -24,8 +24,7 @@ const VerifyOtpScreen = () => {
   });
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-  const BASEURL = "https://taqa.co.ke/api";
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const handleInputChange = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
   };

@@ -40,8 +40,7 @@ const Navbar = () => {
     confirmPassword: "", // For frontend validation
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  //const BASEURL = import.meta.env.VITE_BASE_URL;
-  const BASEURL = "https://taqa.co.ke/api";
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = getTheme(darkMode ? "dark" : "light");
   const handleLogout = () => {
     logout();

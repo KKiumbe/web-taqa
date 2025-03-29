@@ -1,6 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Container, Typography, Tabs, Tab, Box, Button, Grid, IconButton, CircularProgress, Modal, TextField } from "@mui/material";
+import {
+  Container,
+  Typography,
+  Tabs,
+  Tab,
+  Box,
+  Button,
+  Grid,
+  IconButton,
+  CircularProgress,
+  Modal,
+  TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import TitleComponent from "../components/title";
@@ -20,22 +37,18 @@ const CustomerDetails = () => {
   const [openModal, setOpenModal] = useState(false);
   const [smsMessage, setSmsMessage] = useState("");
   const [sending, setSending] = useState(false);
-
-  const [error, setError] = useState(null); // <-- Added error state
-  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-  const BASEURL = "https://taqa.co.ke/api";
+  const [error, setError] = useState(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); // New state for delete confirmation dialog
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = getTheme();
-
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
-  
 
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");
     }
   }, [currentUser]);
-
 
   useEffect(() => {
     const fetchCustomerDetails = async () => {
@@ -46,7 +59,7 @@ const CustomerDetails = () => {
         setReceipts(res.data.receipts);
       } catch (error) {
         console.error("Error fetching customer details:", error);
-        setError("Failed to load customer details."); // <-- Set error message
+        setError("Failed to load customer details.");
       } finally {
         setLoading(false);
       }
@@ -61,35 +74,50 @@ const CustomerDetails = () => {
   const sendSMS = async () => {
     setSending(true);
     try {
-      await axios.post(`${BASEURL}/send-sms`, {
-        mobile: customer.phoneNumber,
-        message: smsMessage,
-
-        
-      },{withCredentials:true});
+      await axios.post(
+        `${BASEURL}/send-sms`,
+        { mobile: customer.phoneNumber, message: smsMessage },
+        { withCredentials: true }
+      );
       setOpenModal(false);
     } catch (error) {
       console.error("Error sending SMS:", error);
+    } finally {
+      setSending(false);
     }
-   finally {
-    setSending(false);
-  }
   };
-  
+
   const sendBill = async () => {
     setSending(true);
     try {
-      await axios.post(`${BASEURL}/send-bill`, {
-        customerId: customer.id,
-      },{withCredentials:true});
+      await axios.post(`${BASEURL}/send-bill`, { customerId: customer.id }, { withCredentials: true });
     } catch (error) {
       console.error("Error sending bill:", error);
+    } finally {
+      setSending(false);
     }
-   finally {
-    setSending(false);
-  }
   };
-  
+
+  // Function to open the delete confirmation dialog
+  const handleDeleteClick = () => {
+    setOpenDeleteDialog(true);
+  };
+
+  // Function to handle customer deletion
+  const deleteCustomer = async () => {
+    setSending(true);
+    try {
+      await axios.delete(`${BASEURL}/customers/${id}`, { withCredentials: true });
+      setOpenDeleteDialog(false); // Close dialog on success
+      alert("Customer deleted successfully."); // Optional: Replace with a Snackbar if preferred
+      navigate(-1); // Navigate back after successful deletion
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      setError("Failed to delete customer.");
+    } finally {
+      setSending(false);
+    }
+  };
 
   const handleBack = () => {
     navigate(-1); // Go back to the previous page
@@ -109,56 +137,85 @@ const CustomerDetails = () => {
         <Typography color="error">{error}</Typography>
       ) : (
         customer && (
-          
           <>
-            <Box sx={{ p: 3, bgcolor: "background.paper", borderRadius: 2, boxShadow: 1 ,ml:5 }}>
+            <Box sx={{ p: 3, bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, ml: 5 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-
-                <Box sx={{ position: "relative", mb: 2 }}>
-  <IconButton
-    onClick={handleBack}
-    sx={{
-      position: "absolute",
-      top: -110,
-      left: -60,
-      color: theme.palette.greenAccent.main,
-      "&:hover": {
-        bgcolor: theme.palette.greenAccent.main + "20",
-      },
-    }}
-  >
-    <ArrowBackIcon sx={{ fontSize: 50 }} />
-  </IconButton>
-</Box>
-
-
-
-
-                  <Typography><strong>Name:</strong> {`${customer.firstName} ${customer.lastName}`}</Typography>
-                  <Typography><strong>Email:</strong> {customer.email || "N/A"}</Typography>
-                  <Typography><strong>Phone:</strong> {customer.phoneNumber}</Typography>
+                  <Box sx={{ position: "relative", mb: 2 }}>
+                    <IconButton
+                      onClick={handleBack}
+                      sx={{
+                        position: "absolute",
+                        top: -110,
+                        left: -60,
+                        color: theme.palette.greenAccent.main,
+                        "&:hover": { bgcolor: theme.palette.greenAccent.main + "20" },
+                      }}
+                    >
+                      <ArrowBackIcon sx={{ fontSize: 50 }} />
+                    </IconButton>
+                  </Box>
+                  <Typography>
+                    <strong>Name:</strong> {`${customer.firstName} ${customer.lastName}`}
+                  </Typography>
+                  <Typography>
+                    <strong>Email:</strong> {customer.email || "N/A"}
+                  </Typography>
+                  <Typography>
+                    <strong>Phone:</strong> {customer.phoneNumber}
+                  </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography><strong>Monthly Charge:</strong> {customer.monthlyCharge}</Typography>
-                  <Typography><strong>Status:</strong> {customer.status}</Typography>
-                  <Typography><strong>Garbage Collection Day:</strong> {customer.garbageCollectionDay}</Typography>
-                  <Typography><strong>Closing Balance:</strong> {customer.closingBalance}</Typography>
+                  <Typography>
+                    <strong>Monthly Charge:</strong> {customer.monthlyCharge}
+                  </Typography>
+                  <Typography>
+                    <strong>Status:</strong> {customer.status}
+                  </Typography>
+                  <Typography>
+                    <strong>Garbage Collection Day:</strong> {customer.garbageCollectionDay}
+                  </Typography>
+                  <Typography>
+                    <strong>Closing Balance:</strong> {customer.closingBalance}
+                  </Typography>
                 </Grid>
               </Grid>
 
-              
               <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
-              <Button variant="contained" color="primary" onClick={() => setOpenModal(true)} disabled={sending}>
+                <Button variant="contained" color="primary" onClick={() => setOpenModal(true)} disabled={sending}>
                   {sending ? "Sending..." : `SMS ${customer.firstName}`}
                 </Button>
                 <Button variant="contained" color="secondary" onClick={sendBill} disabled={sending}>
                   {sending ? "Sending..." : `Send Bill to ${customer.firstName}`}
                 </Button>
-
-
+                <Button variant="contained" color="error" onClick={handleDeleteClick} disabled={sending}>
+                  {sending ? "Deleting..." : "Delete Customer"}
+                </Button>
               </Box>
             </Box>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+              open={openDeleteDialog}
+              onClose={() => setOpenDeleteDialog(false)}
+              aria-labelledby="delete-dialog-title"
+              aria-describedby="delete-dialog-description"
+            >
+              <DialogTitle id="delete-dialog-title">Confirm Delete</DialogTitle>
+              <DialogContent>
+                <DialogContentText id="delete-dialog-description">
+                  Are you sure you want to delete {customer.firstName} {customer.lastName}? This action cannot be undone.
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenDeleteDialog(false)} color="primary">
+                  Cancel
+                </Button>
+                <Button onClick={deleteCustomer} color="error" variant="contained" disabled={sending}>
+                  {sending ? "Deleting..." : "Delete"}
+                </Button>
+              </DialogActions>
+            </Dialog>
 
             <Modal open={openModal} onClose={() => setOpenModal(false)}>
               <Box sx={{ p: 4, bgcolor: "background.paper", borderRadius: 2, width: 400, mx: "auto", mt: "10%" }}>
@@ -186,8 +243,8 @@ const CustomerDetails = () => {
               onChange={handleTabChange}
               TabIndicatorProps={{ style: { backgroundColor: theme.palette.primary.main } }}
               sx={{
-                "& .MuiTab-root": { color: theme.palette.greenAccent.main, ml:5},
-                "& .MuiTab-root.Mui-selected": { color: theme.palette.greenAccent.main ,ml:5},
+                "& .MuiTab-root": { color: theme.palette.greenAccent.main, ml: 5 },
+                "& .MuiTab-root.Mui-selected": { color: theme.palette.greenAccent.main, ml: 5 },
               }}
             >
               <Tab label="Invoices" />
@@ -195,7 +252,9 @@ const CustomerDetails = () => {
             </Tabs>
 
             <Box hidden={tabIndex !== 0} ml={6}>
-              <Typography variant="h6" marginLeft={12}>Invoices</Typography>
+              <Typography variant="h6" marginLeft={12}>
+                Invoices
+              </Typography>
               <DataGrid
                 rows={invoices}
                 columns={[
@@ -205,9 +264,9 @@ const CustomerDetails = () => {
                     width: 100,
                     renderCell: (params) => (
                       <IconButton component={Link} to={`/get-invoice/${params.row.id}`}>
-                        <VisibilityIcon  color={theme.palette.greenAccent.main}/>
+                        <VisibilityIcon color={theme.palette.greenAccent.main} />
                       </IconButton>
-                    )
+                    ),
                   },
                   { field: "invoiceNumber", headerName: "Invoice #", width: 250 },
                   { field: "invoiceAmount", headerName: "Amount", width: 150 },
@@ -227,14 +286,12 @@ const CustomerDetails = () => {
                       </ul>
                     ),
                   },
-
                   {
                     field: "createdAt",
                     headerName: "Date",
                     width: 180,
                     renderCell: (params) => {
-                      if (!params?.value) return "N/A"; // Ensure value exists
-                  
+                      if (!params?.value) return "N/A";
                       try {
                         return new Date(params.value).toLocaleString(undefined, {
                           year: "numeric",
@@ -257,7 +314,9 @@ const CustomerDetails = () => {
             </Box>
 
             <Box hidden={tabIndex !== 1} ml={6}>
-              <Typography variant="h6" marginLeft={10}>Receipts</Typography>
+              <Typography variant="h6" marginLeft={10}>
+                Receipts
+              </Typography>
               <DataGrid
                 rows={receipts}
                 columns={[
@@ -266,10 +325,10 @@ const CustomerDetails = () => {
                     headerName: "View",
                     width: 100,
                     renderCell: (params) => (
-                      <IconButton component={Link} to={`/get-invoice/${params.row.id}`} >
+                      <IconButton component={Link} to={`/get-invoice/${params.row.id}`}>
                         <VisibilityIcon color={theme.palette.greenAccent.main} />
                       </IconButton>
-                    )
+                    ),
                   },
                   { field: "receiptNumber", headerName: "Receipt #", width: 100 },
                   { field: "amount", headerName: "Amount", width: 120 },
@@ -280,8 +339,7 @@ const CustomerDetails = () => {
                     headerName: "Date",
                     width: 180,
                     renderCell: (params) => {
-                      if (!params?.value) return "N/A"; // Ensure value exists
-                  
+                      if (!params?.value) return "N/A";
                       try {
                         return new Date(params.value).toLocaleString(undefined, {
                           year: "numeric",
@@ -303,8 +361,6 @@ const CustomerDetails = () => {
                     width: 100,
                     renderCell: (params) => params.row.payment?.transactionId || "N/A",
                   },
-
-
                 ]}
                 pageSize={5}
                 getRowId={(row) => row.id}

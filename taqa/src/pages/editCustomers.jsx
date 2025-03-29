@@ -23,8 +23,7 @@ const CustomerEditScreen = () => {
   const navigate = useNavigate();
 
 const theme = getTheme();
-//const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-const BASEURL = "https://taqa.co.ke/api";
+const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const [loading, setLoading] = useState(true);
   const [originalData, setOriginalData] = useState(null);
   const [customerData, setCustomerData] = useState({

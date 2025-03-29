@@ -31,8 +31,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
 const AddUser = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-  const BASEURL = "https://taqa.co.ke/api";
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const { tenantId } = useAuthStore((state) => state.currentUser); // Get tenantId
 
   const [userData, setUserData] = useState({

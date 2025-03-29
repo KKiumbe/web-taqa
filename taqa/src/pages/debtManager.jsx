@@ -15,8 +15,7 @@ import {
 import { getTheme } from '../store/theme';
 import TitleComponent from '../components/title';
 
-//const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-const BASEURL = "https://taqa.co.ke/api";
+const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 const theme = getTheme();
 
 function DebtManager() {
@@ -31,11 +30,11 @@ function DebtManager() {
     setMessage('');
     setBalanceAmount(''); // Reset balance input when switching tabs
   };
-
+ 
   // 1. Send SMS to All Customers with Arrears
   const handleSendSmsToAll = async () => {
     try {
-      const response = await axios.post(`${BASEURL}/send-sms-unpaid`, {}, { withCredentials: true });
+      const response = await axios.post(`${BASEURL}/send-sms-unpaid`,{ withCredentials: true });
       setMessage(response.data.message || 'SMS sent to all customers with arrears');
     } catch (error) {
       setMessage(error.response?.data?.error || 'Error sending SMS');
@@ -45,7 +44,7 @@ function DebtManager() {
   // 2. Send SMS to Customers with High Balance
   const handleSendSmsHighBalance = async () => {
     try {
-      const response = await axios.post(`${BASEURL}/send-sms-high-balance`, {}, { withCredentials: true });
+      const response = await axios.post(`${BASEURL}/send-sms-high-balance`,{ withCredentials: true });
       setMessage(response.data.message || 'SMS sent to customers with high balance');
     } catch (error) {
       setMessage(error.response?.data?.error || 'Error sending SMS');
@@ -55,7 +54,7 @@ function DebtManager() {
   // 3. Send SMS to Customers with Low Balance
   const handleSendSmsLowBalance = async () => {
     try {
-      const response = await axios.post(`${BASEURL}/send-sms-low-balance`, {}, { withCredentials: true });
+      const response = await axios.post(`${BASEURL}/send-sms-low-balance`,{ withCredentials: true });
       setMessage(response.data.message || 'SMS sent to customers with low balance');
     } catch (error) {
       setMessage(error.response?.data?.error || 'Error sending SMS');

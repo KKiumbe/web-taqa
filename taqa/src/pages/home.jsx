@@ -22,7 +22,7 @@ const HomeScreen = () => {
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
   const theme = getTheme();
-  const BASEURL = "https://taqa.co.ke/api";
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
   useEffect(() => {
     if (!currentUser) {

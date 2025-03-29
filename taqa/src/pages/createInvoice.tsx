@@ -10,6 +10,11 @@ import {
   Typography,
   Box,
   Autocomplete,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import axios from "axios";
 import TitleComponent from "../components/title";
@@ -23,7 +28,6 @@ const CreateInvoice = () => {
   const theme = getTheme();
   const currentUser = useAuthStore((state) => state.currentUser);
 
-
   // State management
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -33,8 +37,10 @@ const CreateInvoice = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPhoneSearch, setIsPhoneSearch] = useState(false);
+  const [openGenerateDialog, setOpenGenerateDialog] = useState(false); // State for generate all dialog
 
-  const BASEURL = "https://taqa.co.ke/api";
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!currentUser) navigate("/login");
@@ -54,12 +60,10 @@ const CreateInvoice = () => {
     const isPhoneNumber = /^\d+$/.test(query);
 
     try {
-      const url = isPhoneNumber 
-        ? `${BASEURL}/search-customer-by-phone` 
+      const url = isPhoneNumber
+        ? `${BASEURL}/search-customer-by-phone`
         : `${BASEURL}/search-customer-by-name`;
-      const params = isPhoneNumber 
-        ? { phone: query } 
-        : { name: cleanSearchQuery(query) };
+      const params = isPhoneNumber ? { phone: query } : { name: cleanSearchQuery(query) };
 
       if (isPhoneNumber && query.length < 10) {
         setSearchResults([]);
@@ -67,24 +71,26 @@ const CreateInvoice = () => {
       }
 
       const response = await axios.get(url, { params, withCredentials: true });
-      const results = isPhoneNumber 
-        ? [response.data] 
+      const results = isPhoneNumber
+        ? [response.data]
         : Array.isArray(response.data) ? response.data : [];
-      
+
       setSearchResults(results.length ? results : []);
       if (!results.length) {
-        setSnackbar({ 
-          open: true, 
+        setSnackbar({
+          open: true,
           message: isPhoneNumber ? "No customer found with that phone number" : "No customer found with that name",
-          severity: "info" 
+          severity: "info",
         });
       }
     } catch (error) {
       console.error("Search error:", error.response || error);
       setSnackbar({
         open: true,
-        message: error.response?.status === 404 
-          ? (isPhoneNumber ? "No customer found with that phone number" : "No customer found with that name")
+        message: error.response?.status === 404
+          ? isPhoneNumber
+            ? "No customer found with that phone number"
+            : "No customer found with that name"
           : `Error searching customers: ${error.response?.data?.message || error.message}`,
         severity: "error",
       });
@@ -130,7 +136,7 @@ const CreateInvoice = () => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
-  // Create invoice
+  // Create invoice for a single customer
   const handleCreateInvoice = async () => {
     const { description, amount, quantity } = formData;
     if (!description || !amount || !quantity || !selectedCustomer) {
@@ -156,8 +162,36 @@ const CreateInvoice = () => {
     }
   };
 
+  // Open the generate invoices dialog
+  const handleGenerateAllClick = () => {
+    setOpenGenerateDialog(true);
+  };
+
+  // Generate invoices for all active customers
+  const handleGenerateAllConfirm = async () => {
+    setLoading(true);
+    setOpenGenerateDialog(false); // Close dialog
+    try {
+      await axios.post(`${BASEURL}/generate-invoices-for-all`, {}, { withCredentials: true });
+      setSnackbar({
+        open: true,
+        message: "Invoices generated successfully for all active customers!",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error generating invoices for all:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to generate invoices. Please try again.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Render search results for phone search
-  const renderPhoneSearchResults = () => (
+  const renderPhoneSearchResults = () =>
     searchResults.length > 0 ? (
       <Card sx={{ mt: 2, mb: 2 }}>
         <CardContent>
@@ -174,7 +208,9 @@ const CreateInvoice = () => {
         </CardContent>
       </Card>
     ) : (
-      !isSearching && searchQuery && searchQuery.length >= 10 && (
+      !isSearching &&
+      searchQuery &&
+      searchQuery.length >= 10 && (
         <Card sx={{ mt: 2, mb: 2 }}>
           <CardContent>
             <Typography variant="h6">Search Results</Typography>
@@ -182,8 +218,7 @@ const CreateInvoice = () => {
           </CardContent>
         </Card>
       )
-    )
-  );
+    );
 
   // Render selected customer
   const renderSelectedCustomer = () =>
@@ -202,8 +237,22 @@ const CreateInvoice = () => {
 
   return (
     <Box sx={{ maxWidth: 950, padding: 3, ml: 50 }}>
+      <Box sx={{ mb: 3 ,ml:50 }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={handleGenerateAllClick}
+          disabled={loading}
+        >
+          {loading ? <CircularProgress size={24} /> : "Generate Invoices for All Customers"}
+        </Button>
+      </Box>
+
       <TitleComponent title="Create an Invoice" />
       
+      {/* Generate Invoices for All Button */}
+      
+
       {/* Search Input */}
       {isPhoneSearch ? (
         <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
@@ -216,7 +265,6 @@ const CreateInvoice = () => {
             disabled={isSearching}
             inputProps={{ maxLength: 15 }} // Limit input length if needed
           />
-          {/* Removed manual Search button since debounce handles it */}
         </Box>
       ) : (
         <Autocomplete
@@ -243,7 +291,7 @@ const CreateInvoice = () => {
 
       {/* Phone Search Results */}
       {isPhoneSearch && renderPhoneSearchResults()}
-      
+
       {/* Selected Customer */}
       {renderSelectedCustomer()}
 
@@ -273,15 +321,40 @@ const CreateInvoice = () => {
         inputProps={{ min: 0, step: 1 }}
       />
 
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleCreateInvoice}
-        disabled={loading}
-        sx={{ mt: 2, display: "block", color: theme.palette.greenAccent.main }}
+      <Box sx={{ mt: 2 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleCreateInvoice}
+          disabled={loading}
+          sx={{ color: theme.palette.greenAccent.main }}
+        >
+          {loading ? <CircularProgress size={24} /> : "Create Invoice"}
+        </Button>
+      </Box>
+
+      {/* Generate Invoices for All Confirmation Dialog */}
+      <Dialog
+        open={openGenerateDialog}
+        onClose={() => setOpenGenerateDialog(false)}
+        aria-labelledby="generate-dialog-title"
+        aria-describedby="generate-dialog-description"
       >
-        {loading ? <CircularProgress size={24} /> : "Create Invoice"}
-      </Button>
+        <DialogTitle id="generate-dialog-title">Confirm Generate Invoices</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="generate-dialog-description">
+            This action will create invoices for all active customers and update their balances. This cannot be undone. Are you sure you want to proceed?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenGenerateDialog(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleGenerateAllConfirm} color="primary" variant="contained" disabled={loading}>
+            {loading ? <CircularProgress size={20} /> : "Confirm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}

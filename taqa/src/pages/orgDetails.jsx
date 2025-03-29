@@ -19,8 +19,7 @@ import { useAuthStore } from "../store/authStore";
 import { getTheme } from "../store/theme";
 
 const Organization = () => {
-  //const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-  const BASEURL = "https://taqa.co.ke/api";
+  const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = useTheme();
   const theme1 = getTheme();
   const navigate = useNavigate();
