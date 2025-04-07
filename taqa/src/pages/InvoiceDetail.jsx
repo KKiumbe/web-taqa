@@ -13,7 +13,7 @@ import {
   Alert,
   IconButton,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack"; // Import the back icon
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import axios from "axios";
 import TitleComponent from "../components/title";
 import { useAuthStore } from "../store/authStore";
@@ -26,6 +26,8 @@ const InvoiceDetails = () => {
   const [error, setError] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false); // New state for cancel loading
 
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -53,7 +55,7 @@ const InvoiceDetails = () => {
       setError("Failed to load invoice.");
     } finally {
       setLoading(false);
-      setTimeout(() => setSnackbarOpen(false), 2000); // Hide Snackbar after 2s
+      setTimeout(() => setSnackbarOpen(false), 2000);
     }
   };
 
@@ -65,6 +67,66 @@ const InvoiceDetails = () => {
     navigate("/invoices"); // Navigate to the invoices list page
   };
 
+  const handleDownloadInvoice = async () => {
+    setDownloadLoading(true);
+    setSnackbarMessage("Downloading invoice...");
+    setSnackbarOpen(true);
+
+    try {
+      const response = await axios.get(`${BASEURL}/download-invoice/${id}`, {
+        withCredentials: true,
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice-${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setSnackbarMessage("Invoice downloaded successfully!");
+    } catch (err) {
+      console.error("Error downloading invoice:", err);
+      setSnackbarMessage("Failed to download invoice.");
+    } finally {
+      setDownloadLoading(false);
+      setTimeout(() => setSnackbarOpen(false), 2000);
+    }
+  };
+
+  const handleCancelInvoice = async () => {
+    setCancelLoading(true);
+    setSnackbarMessage("Canceling invoice...");
+    setSnackbarOpen(true);
+
+    try {
+      const response = await axios.patch(
+        `${BASEURL}/invoice/cancel/${id}`
+   
+      );
+      
+
+      // Update invoice state with the new status and customer balance
+      setInvoice({
+        ...invoice,
+        status: response.data.invoice.status,
+        closingBalance: response.data.customer.closingBalance, // Update if closingBalance is part of invoice
+      });
+
+      setSnackbarMessage(response.data.message);
+    } catch (err) {
+      console.error("Error canceling invoice:", err);
+      setSnackbarMessage(err.response?.data?.message || "Failed to cancel invoice.");
+    } finally {
+      setCancelLoading(false);
+      setTimeout(() => setSnackbarOpen(false), 2000);
+    }
+  };
+
   if (loading) return <CircularProgress sx={{ color: theme.palette.greenAccent.main }} />;
   if (error) return <Typography color="error">{error}</Typography>;
 
@@ -72,7 +134,6 @@ const InvoiceDetails = () => {
     <Card
       sx={{
         maxWidth: 900,
-      
         margin: "auto",
         padding: 3,
         mt: 4,
@@ -83,7 +144,7 @@ const InvoiceDetails = () => {
         minHeight: "80vh",
         ml: 50,
         bgcolor: theme.palette.primary.main,
-        position: "relative", // Allow absolute positioning of the back button
+        position: "relative",
       }}
     >
       {/* Back Icon Button at Top Left */}
@@ -99,27 +160,8 @@ const InvoiceDetails = () => {
           },
         }}
       >
-        <ArrowBackIcon sx={{ fontSize: 40 }} /> {/* Large icon size */}
+        <ArrowBackIcon sx={{ fontSize: 40 }} />
       </IconButton>
-
-
-       {/* Navigation Button (Invoices) at Bottom */}
-       <Stack direction="row" spacing={2} sx={{ mt: 4, justifyContent: "center" }}>
-          <Button
-            variant="outlined"
-            sx={{
-              borderColor: theme.palette.greenAccent.main,
-              color: theme.palette.greenAccent.main,
-              "&:hover": {
-                borderColor: theme.palette.greenAccent.main,
-                bgcolor: theme.palette.greenAccent.main + "20",
-              },
-            }}
-            onClick={handleInvoicesPage}
-          >
-            Invoices Page 
-          </Button>
-        </Stack>
 
       <CardContent sx={{ width: "100%" }}>
         <TitleComponent title="Invoice Details" />
@@ -129,7 +171,13 @@ const InvoiceDetails = () => {
 
         <Chip
           label={invoice.status}
-          color={invoice.status === "PAID" ? "success" : "warning"}
+          color={
+            invoice.status === "PAID"
+              ? "success"
+              : invoice.status === "CANCELED"
+              ? "error"
+              : "warning"
+          }
           sx={{ mt: 2, mb: 2 }}
         />
 
@@ -185,8 +233,10 @@ const InvoiceDetails = () => {
               color: "#fff",
               "&:hover": { bgcolor: theme.palette.greenAccent.main, opacity: 0.9 },
             }}
+            onClick={handleDownloadInvoice}
+            disabled={downloadLoading}
           >
-            Download PDF
+            {downloadLoading ? "Downloading..." : "Download PDF"}
           </Button>
           <Button
             variant="contained"
@@ -206,20 +256,38 @@ const InvoiceDetails = () => {
                 color: "#fff",
                 "&:hover": { bgcolor: theme.palette.error.main, opacity: 0.9 },
               }}
+              onClick={handleCancelInvoice}
+              disabled={cancelLoading}
             >
-              Cancel Invoice
+              {cancelLoading ? "Canceling..." : "Cancel Invoice"}
             </Button>
           )}
         </Stack>
 
-       
+        {/* Navigation Button (Invoices) at Bottom */}
+        <Stack direction="row" spacing={2} sx={{ mt: 4, justifyContent: "center" }}>
+          <Button
+            variant="outlined"
+            sx={{
+              borderColor: theme.palette.greenAccent.main,
+              color: theme.palette.greenAccent.main,
+              "&:hover": {
+                borderColor: theme.palette.greenAccent.main,
+                bgcolor: theme.palette.greenAccent.main + "20",
+              },
+            }}
+            onClick={handleInvoicesPage}
+          >
+            Invoices Page
+          </Button>
+        </Stack>
 
         {/* Snackbar for notifications */}
         <Snackbar
           open={snackbarOpen}
           autoHideDuration={4000}
           onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          anchorOrigin={{ vertical: "elaarbottom", horizontal: "center" }}
         >
           <Alert
             onClose={() => setSnackbarOpen(false)}

@@ -51,6 +51,7 @@ const PaymentDetails = () => {
   const navigate = useNavigate();
   const theme = getTheme();
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");
@@ -113,10 +114,9 @@ const PaymentDetails = () => {
     setSearchQuery(value);
     const isPhoneNumber = /^\d+$/.test(value);
     if (!isPhoneNumber && value.length >= 2) {
-      // Autocomplete for name search only
       handleSearchAutocomplete();
     } else {
-      setSearchResults([]); // Clear results for phone until search button is pressed
+      setSearchResults([]);
     }
   };
 
@@ -160,12 +160,11 @@ const PaymentDetails = () => {
       });
 
       if (isPhoneNumber) {
-        // Phone search returns a single customer
         const customer = response.data;
         if (customer) {
           setSelectedCustomer(customer);
-          setModalStep(2); // Move directly to confirmation
-          setSearchResults([customer]); // For consistency in autocomplete
+          setModalStep(2);
+          setSearchResults([customer]);
         } else {
           setSnackbarMessage("No customer found with this phone number.");
           setSnackbarSeverity("warning");
@@ -173,7 +172,6 @@ const PaymentDetails = () => {
           setSearchResults([]);
         }
       } else {
-        // Name search returns an array
         const results = response.data.customers || response.data;
         if (results.length > 0) {
           setSearchResults(results);
@@ -203,14 +201,11 @@ const PaymentDetails = () => {
   };
 
   const handleManualReceipt = async () => {
-    if (payment?.receipted) {
-      setSnackbarMessage("This payment has already been receipted.");
-      setSnackbarSeverity("info");
-      setSnackbarOpen(true);
-      return;
-    }
     if (!selectedCustomer) {
       setReceiptingError("No customer selected.");
+      setSnackbarMessage("No customer selected.");
+      setSnackbarSeverity("warning");
+      setSnackbarOpen(true);
       return;
     }
 
@@ -230,6 +225,9 @@ const PaymentDetails = () => {
       const receiptId = response.data.receipts[0]?.id;
       if (!receiptId) {
         setReceiptingError("No receipt ID returned.");
+        setSnackbarMessage("No receipt ID returned.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
         return;
       }
       setPayment((prev) => ({ ...prev, receipted: true, receipt: response.data.receipts[0] }));
@@ -239,7 +237,18 @@ const PaymentDetails = () => {
       setSnackbarOpen(true);
       navigate(`/receipts/${receiptId}`);
     } catch (error) {
-      setReceiptingError(error.response?.data?.error || "Failed to receipt payment.");
+      const errorMessage = error.response?.data?.message || "Failed to receipt payment.";
+      if (error.response?.status === 400 && errorMessage === "Payment with this ID has already been receipted.") {
+        setSnackbarMessage("This payment has already been receipted.");
+        setSnackbarSeverity("info");
+        setSnackbarOpen(true);
+        setModalOpen(false); // Close modal since no action can be taken
+      } else {
+        setReceiptingError(errorMessage);
+        setSnackbarMessage(errorMessage);
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+      }
       console.error("Error receipting payment:", error);
     } finally {
       setReceiptLoading(false);

@@ -3,12 +3,17 @@ import { DataGrid } from "@mui/x-data-grid";
 import {
   IconButton,
   Box,
-  Alert,
   TextField,
   Button,
   CircularProgress,
   Typography,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -33,6 +38,7 @@ const flattenPayments = (payments) => {
       transactionId: payment.transactionId,
       firstName: payment.firstName,
       receipted: payment.receipted,
+      ref: payment.ref,
       createdAt: payment.createdAt,
       receiptId: receipt.id || null,
       receiptNumber: receipt.receiptNumber || "N/A",
@@ -46,63 +52,65 @@ const Payments = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
   });
   const [rowCount, setRowCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState("name");
+  const [modeFilter, setModeFilter] = useState("all");
   const [showUnreceiptedOnly, setShowUnreceiptedOnly] = useState(false);
 
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
   const theme = getTheme();
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+
+  // Redirect to login if no user
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");
     }
   }, [currentUser, navigate]);
 
-  // Fetch all payments or only unreceipted payments based on filter
-  const fetchAllPayments = async (page, pageSize, unreceiptedOnly = false) => {
-    
-    setLoading(true);
-    setError(null);
-    try {
-      const endpoint = unreceiptedOnly ? `${BASEURL}/payments/unreceipted` : `${BASEURL}/payments`;
-      const response = await axios.get(endpoint, {
-        params: {
-          page: page + 1,
-          limit: pageSize,
-        },
-        withCredentials: true,
-      });
-      const { payments: fetchedPayments, total } = response.data;
-      const flattenedData = flattenPayments(fetchedPayments || []);
-      setPayments(flattenedData);
-      setRowCount(total || 0);
-    } catch (err) {
-      setError(err.response?.data?.error || "Failed to fetch payments.");
-      console.error("Error fetching payments:", err);
-      setPayments([]);
-      setRowCount(0);
-    } finally {
-      setLoading(false);
+  // Fetch payments on initial mount
+  useEffect(() => {
+    if (currentUser) {
+      fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
     }
+  }, [currentUser]);
+
+  // Fetch payments when filters or pagination change
+  useEffect(() => {
+    if (currentUser && !searchQuery) {
+      fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
+    }
+  }, [paginationModel, modeFilter, showUnreceiptedOnly, currentUser]);
+
+  // Handle closing the Snackbar
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setOpenSnackbar(false);
+    setError(null); // Clear error after closing
   };
 
-  // Fetch payments by phone number
-  const fetchPaymentsByPhone = async (page, pageSize, query) => {
+  // Fetch all payments or filtered by mode/unreceipted-only
+  const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${BASEURL}/payments/search-by-phone`, {
-        params: {
-          phone: query,
-          page: page + 1,
-          limit: pageSize,
-        },
+      const endpoint = unreceiptedOnly
+        ? `${BASEURL}/payments/unreceipted`
+        : `${BASEURL}/payments`;
+      const params = { page: page + 1, limit: pageSize };
+      if (mode !== "all") params.mode = mode;
+
+      const response = await axios.get(endpoint, {
+        params,
         withCredentials: true,
       });
       const { payments: fetchedPayments, total } = response.data;
@@ -110,8 +118,13 @@ const Payments = () => {
       setPayments(flattenedData);
       setRowCount(total || 0);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to search payments by phone.");
-      console.error("Error fetching payments by phone:", err);
+      setError(
+        err.response?.status === 404
+          ? "User not found"
+          : err.response?.data?.error || "Failed to fetch payments."
+      );
+      setOpenSnackbar(true);
+      console.error("Error fetching payments:", err);
       setPayments([]);
       setRowCount(0);
     } finally {
@@ -124,15 +137,8 @@ const Payments = () => {
     setLoading(true);
     setError(null);
     try {
-      const [firstName, ...lastNameParts] = query.trim().split(" ");
-      const lastName = lastNameParts.length > 0 ? lastNameParts.join(" ") : undefined;
       const response = await axios.get(`${BASEURL}/payments/search-by-name`, {
-        params: {
-          firstName,
-          lastName,
-          page: page + 1,
-          limit: pageSize,
-        },
+        params: { name: query, page: page + 1, limit: pageSize },
         withCredentials: true,
       });
       const { payments: fetchedPayments, total } = response.data;
@@ -140,7 +146,12 @@ const Payments = () => {
       setPayments(flattenedData);
       setRowCount(total || 0);
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to search payments by name.");
+      setError(
+        err.response?.status === 404
+          ? "User not found"
+          : err.response?.data?.error || "Failed to search payments by name."
+      );
+      setOpenSnackbar(true);
       console.error("Error fetching payments by name:", err);
       setPayments([]);
       setRowCount(0);
@@ -149,13 +160,61 @@ const Payments = () => {
     }
   };
 
-  // Initial fetch and pagination updates
-  useEffect(() => {
-    if (!currentUser) return;
-    if (!searchQuery) {
-      fetchAllPayments(paginationModel.page, paginationModel.pageSize, showUnreceiptedOnly);
+  // Fetch payment by transaction ID
+  const fetchPaymentByTransactionId = async (page, pageSize, query) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${BASEURL}/searchTransactionById`, {
+        params: { transactionId: query, page: page + 1, limit: pageSize },
+        withCredentials: true,
+      });
+      const { transaction } = response.data;
+      const flattenedData = flattenPayments([transaction]);
+      setPayments(flattenedData);
+      setRowCount(1);
+    } catch (err) {
+      setError(
+        err.response?.status === 404
+          ? "User not found"
+          : err.response?.data?.error || "Failed to search payment by transaction ID."
+      );
+      setOpenSnackbar(true);
+      console.error("Error fetching payment by transaction ID:", err);
+      setPayments([]);
+      setRowCount(0);
+    } finally {
+      setLoading(false);
     }
-  }, [paginationModel, searchQuery, currentUser, showUnreceiptedOnly]);
+  };
+
+  // Fetch payments by ref number
+  const fetchPaymentsByRef = async (page, pageSize, query) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${BASEURL}/payments/search-by-phone`, {
+        params: { ref: query, page: page + 1, limit: pageSize },
+        withCredentials: true,
+      });
+      const { payments: fetchedPayments, total } = response.data;
+      const flattenedData = flattenPayments(fetchedPayments || []);
+      setPayments(flattenedData);
+      setRowCount(total || 0);
+    } catch (err) {
+      setError(
+        err.response?.status === 404
+          ? "User not found"
+          : err.response?.data?.error || "Failed to search payments by ref number."
+      );
+      setOpenSnackbar(true);
+      console.error("Error fetching payments by ref:", err);
+      setPayments([]);
+      setRowCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditPress = (id) => {
     navigate(`/payments/${id}`);
@@ -165,17 +224,36 @@ const Payments = () => {
     setSearchQuery(e.target.value);
   };
 
+  const handleSearchTypeChange = (e) => {
+    setSearchType(e.target.value);
+    setSearchQuery("");
+    setPayments([]);
+    setRowCount(0);
+  };
+
+  const handleModeFilterChange = (e) => {
+    setModeFilter(e.target.value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
   const handleSearch = () => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
     const trimmedQuery = searchQuery.trim();
     if (trimmedQuery === "") {
-      fetchAllPayments(0, paginationModel.pageSize, showUnreceiptedOnly);
+      fetchPayments(0, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
     } else {
-      const isPhoneNumber = /^\d+$/.test(trimmedQuery);
-      if (isPhoneNumber) {
-        fetchPaymentsByPhone(0, paginationModel.pageSize, trimmedQuery);
-      } else {
-        fetchPaymentsByName(0, paginationModel.pageSize, trimmedQuery);
+      switch (searchType) {
+        case "name":
+          fetchPaymentsByName(0, paginationModel.pageSize, trimmedQuery);
+          break;
+        case "transactionId":
+          fetchPaymentByTransactionId(0, paginationModel.pageSize, trimmedQuery);
+          break;
+        case "ref":
+          fetchPaymentsByRef(0, paginationModel.pageSize, trimmedQuery);
+          break;
+        default:
+          break;
       }
     }
   };
@@ -189,7 +267,7 @@ const Payments = () => {
   const handleFilterUnreceipted = () => {
     setShowUnreceiptedOnly((prev) => {
       const newValue = !prev;
-      fetchAllPayments(0, paginationModel.pageSize, newValue); // Fetch with new filter state
+      fetchPayments(0, paginationModel.pageSize, modeFilter, newValue);
       return newValue;
     });
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
@@ -214,6 +292,7 @@ const Payments = () => {
     { field: "modeOfPayment", headerName: "Mode of Payment", width: 180 },
     { field: "transactionId", headerName: "Transaction ID", width: 200 },
     { field: "firstName", headerName: "Customer Name", width: 180 },
+    { field: "ref", headerName: "Reference Number", width: 180 },
     {
       field: "receipted",
       headerName: "Status",
@@ -237,7 +316,7 @@ const Payments = () => {
         params.row.receiptId ? (
           <Link
             to={`/receipts/${params.row.receiptId}`}
-            style={{ textDecoration: "none", color: theme.palette.greenAccent.main }} 
+            style={{ textDecoration: "none", color: theme.palette.greenAccent.main }}
           >
             {params.value}
           </Link>
@@ -266,8 +345,7 @@ const Payments = () => {
       headerName: "Payment Date Sent",
       width: 180,
       renderCell: (params) => {
-        if (!params?.value) return "N/A"; // Ensure value exists
-    
+        if (!params?.value) return "N/A";
         try {
           return new Date(params.value).toLocaleString(undefined, {
             year: "numeric",
@@ -305,8 +383,26 @@ const Payments = () => {
       <TitleComponent title="Payments" />
 
       <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="search-type-label">Search By</InputLabel>
+          <Select
+            labelId="search-type-label"
+            value={searchType}
+            label="Search By"
+            onChange={handleSearchTypeChange}
+            sx={{
+              "& .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.grey[300] },
+              "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.greenAccent.main },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.greenAccent.main },
+            }}
+          >
+            <MenuItem value="name">Name</MenuItem>
+            <MenuItem value="transactionId">Transaction ID</MenuItem>
+            <MenuItem value="ref">Reference Number</MenuItem>
+          </Select>
+        </FormControl>
         <TextField
-          label="Search by Name or Phone Number"
+          label={`Search by ${searchType === "name" ? "Name" : searchType === "transactionId" ? "Transaction ID" : "Reference Number"}`}
           variant="outlined"
           size="small"
           value={searchQuery}
@@ -320,10 +416,12 @@ const Payments = () => {
               "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main },
             },
             "& .MuiInputLabel-root": { color: theme.palette.grey[500] },
-            "& .MuiInputBase-input": { color: theme.palette.grey[900] },
+            "& .MuiInputBase-input": { color: theme.palette.primary },
           }}
         />
-        <Button
+
+
+          <Button
           variant="contained"
           onClick={handleSearch}
           sx={{
@@ -334,6 +432,26 @@ const Payments = () => {
         >
           Search
         </Button>
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="mode-filter-label">Payment Mode</InputLabel>
+          <Select
+            labelId="mode-filter-label"
+            value={modeFilter}
+            label="Payment Mode"
+            onChange={handleModeFilterChange}
+            sx={{
+              "& .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.grey[300] },
+              "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.greenAccent.main },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.greenAccent.main },
+            }}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="CASH">Cash</MenuItem>
+            <MenuItem value="MPESA">M-Pesa</MenuItem>
+            <MenuItem value="BANK_TRANSFER">Bank Transfer</MenuItem>
+          </Select>
+        </FormControl>
+      
         <Button
           variant={showUnreceiptedOnly ? "contained" : "outlined"}
           onClick={handleFilterUnreceipted}
@@ -349,12 +467,6 @@ const Payments = () => {
           {showUnreceiptedOnly ? "Show All Payments" : "Show Unreceipted Only"}
         </Button>
       </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
 
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
@@ -386,6 +498,21 @@ const Payments = () => {
           Page {paginationModel.page + 1} of {Math.ceil(rowCount / paginationModel.pageSize) || 1}
         </Typography>
       )}
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000} // Hides after 6 seconds
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }} // Position at top center
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
