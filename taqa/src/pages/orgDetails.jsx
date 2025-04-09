@@ -91,11 +91,13 @@ const Organization = () => {
     <Box
       sx={{
         p: { xs: 2, md: 4 },
-        ml: { xs: 0, md: "220px" }, // Adjusted for sidebar width
+        width: "100%",
         display: "flex",
         justifyContent: "center",
         minHeight: "100vh",
         bgcolor: theme.palette.background.default,
+        ml: { xs: 0, md: 2, lg: 4 }
+
       }}
     >
       {loading ? (
@@ -164,7 +166,7 @@ const Organization = () => {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    bgcolor: theme.palette.grey[100],
+                  
                     borderRadius: "8px",
                     p: 2,
                   }}
@@ -199,18 +201,17 @@ const Organization = () => {
                       </Typography>
                     </Box>
                   )}
-                  <Typography
-                    variant="h6"
-                    sx={{ mt: 2, fontWeight: "medium", color: theme.palette.text.primary }}
-                  >
-                    {tenant?.name}
-                  </Typography>
+               
                 </Box>
               </Grid>
-
+             
               {/* Details Section */}
               <Grid item xs={12} sm={8}>
                 <Grid container spacing={2}>
+
+                <Grid item xs={12} sm={6}>
+                    {renderField("Name", tenant?.name)}
+                  </Grid>
                   <Grid item xs={12} sm={6}>
                     {renderField("Status", tenant?.status)}
                   </Grid>

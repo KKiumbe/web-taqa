@@ -21,7 +21,7 @@ import { getTheme } from '../store/theme';
 import TitleComponent from '../components/title';
 
 
-const theme = getTheme();
+
 const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 // Days of the week options
 const daysOfWeek = [
@@ -49,7 +49,7 @@ function SendBillsScreen() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   // State for send bills per day
   const [day, setDay] = useState(null);
-
+  const theme = getTheme();
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
     setMessage('');
@@ -185,20 +185,23 @@ function SendBillsScreen() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, ml: 35 }}>
+    <Container maxWidth="md" sx={{width: '100%', padding: 3, 
+      ml:20
+     }}>
 
 
 <Typography
-                variant="h4"
-                sx={{ color: theme.palette.primary.contrastText, mb: 2 , ml:1,marginTop:-40,}} // Primary color for title
+              
+              // Primary color for title
+              sx={{ width: '100%', textAlign: 'center', mb: 2, color: theme.palette.primary.contrastText }}
               >
 
-          <TitleComponent title="Bills Center" />
+          <TitleComponent title="Bills Center"  />
                
               </Typography>
       <Paper elevation={3}>
 
-        <Box sx={{ borderBottom: 1, borderColor: theme.palette.primary.main ,marginTop:10}}>
+        <Box sx={{ }}>
           <Tabs 
             value={tabValue} 
             onChange={handleTabChange} 
@@ -209,7 +212,11 @@ function SendBillsScreen() {
               borderRadius: 2,
             
               '& .MuiTab-root': { color: theme.palette.primary.contrastText },
-              '& .Mui-selected': { color: theme.palette.greenAccent.main },
+              '& .Mui-selected': { color: theme.palette.greenAccent },
+              color: theme.palette.primary.main,
+              '&  .MuiTabs-selected': { color: theme.palette.secondary.dark},
+              '& .MuiTabs-indicator': { backgroundColor: theme.palette.greenAccent.main },
+            
             }}
           >
             <Tab label="Send Bills to All" />

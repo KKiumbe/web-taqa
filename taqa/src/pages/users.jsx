@@ -54,7 +54,7 @@ const UserManagementScreen = () => {
  
 
   return (
-    <Box sx={{ p: 3, ml: 25 }}>
+    <Box sx={{ p: 3,}}>
       <Typography variant="h4" gutterBottom>
        <TitleComponent title={` Users Manager`}/>
       </Typography>

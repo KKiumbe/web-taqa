@@ -191,33 +191,41 @@ const handleSearch = () => {
     { field: "phoneNumber", headerName: "Phone Number", width: 180 },
     { field: "invoiceAmount", headerName: "Invoice Amount", width: 150 },
     { field: "closingBalance", headerName: "Closing Balance", width: 150 },
-    { field: "invoicePeriod", headerName: "Period", width: 150 },
-    { field: "status", headerName: "Status", width: 120 },
-    { field: "isSystemGenerated", headerName: "System Generated", width: 180 },
-    { field: "itemDescriptions", headerName: "Description", width: 250 },
 
     {
       field: "createdAt",
       headerName: "Date",
-      width: 180,
+      width: 200,
       renderCell: (params) => {
-        if (!params?.value) return "N/A"; // Ensure value exists
+        if (!params?.value) return "N/A";
     
         try {
-          return new Date(params.value).toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          });
+          const date = new Date(params.value);
+          date.setHours(date.getHours() - 1); // Subtract 1 hour to correct time
+    
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = date.toLocaleString('default', { month: 'short' });
+          const year = date.getFullYear();
+    
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+          return `${day} ${month} ${year}, ${hours}:${minutes}:${seconds}`;
         } catch (error) {
           console.error("Invalid Date:", params.value);
           return "Invalid Date";
         }
       },
     },
+    { field: "invoicePeriod", headerName: "Period", width: 150 },
+    { field: "status", headerName: "Status", width: 120 },
+    { field: "isSystemGenerated", headerName: "System Generated", width: 180 },
+    { field: "itemDescriptions", headerName: "Description", width: 250 },
+
+    
+    
+    
   ];
 
   const handleRowClick = (params) => {
@@ -266,7 +274,11 @@ const handleSearch = () => {
   const currentPage = paginationModel.page + 1;
 
   return (
-    <Grid container spacing={2} sx={{ height: "100vh", padding: 2, ml: 15, position: "relative" }}>
+  
+<Box sx={{  p:3,bgcolor: theme.palette.primary.main, height: "100vh"}}>
+
+
+
       <IconButton
         onClick={handleBack}
         sx={{
@@ -478,6 +490,10 @@ const handleSearch = () => {
           </Paper>
         </Grid>
       )}
-    </Grid>
+  
+
+  </Box>
+  
+
   );
 }

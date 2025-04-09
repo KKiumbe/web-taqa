@@ -91,7 +91,18 @@ const ReceiptDetail = () => {
   }
 
   return (
-    <Box sx={{ padding: 4, minHeight: "100vh", position: "relative", ml:40,bgcolor: theme.palette.grey[100] }}>
+    <Box sx={{ 
+
+      minHeight: "100vh", // Full page height
+      width: "40%", // Full width
+      bgcolor: theme.palette.background.paper, // Uniform background
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-end",
+      ml:20, // Center content
+     
+      p: 0,
+    }}>
       {/* Back Button (Top Left) */}
       <IconButton
         onClick={handleGoBack}
@@ -153,30 +164,30 @@ const ReceiptDetail = () => {
         <Grid container spacing={3}>
           {/* Customer Details */}
           <Grid item xs={12}>
-            <Card sx={{ bgcolor: theme.palette.grey[100], borderRadius: 2, }}>
+            <Card sx={{  borderRadius: 2, }}>
               <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2, color: theme.palette.primary.main }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2, color: theme.palette.primary.contrastText }}>
                   Customer Information
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
                 <Grid container spacing={1}>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{ color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{ color: theme.palette.primary.contrastText }}>
                       <strong>First Name:</strong> {receipt.customer?.firstName || "N/A"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText}}>
                       <strong>Last Name:</strong> {receipt.customer?.lastName || "N/A"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                       <strong>Phone Number:</strong> {receipt.customer?.phoneNumber || "N/A"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                       <strong>Closing Balance:</strong> {receipt.customer?.closingBalance || 0} KES
                     </Typography>
                   </Grid>
@@ -187,51 +198,57 @@ const ReceiptDetail = () => {
 
           {/* Payment Details */}
           <Grid item xs={12}>
-            <Card sx={{ bgcolor: theme.palette.grey[100], borderRadius: 2 }}>
+            <Card sx={{  borderRadius: 2 }}>
               <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2, color: theme.palette.primary.main }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2, color: theme.palette.primary.contrastText }}>
                   Payment Information
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
                 <Grid container spacing={1}>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                       <strong>Payment ID:</strong> {receipt.payment?.id || "N/A"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                       <strong>Amount:</strong> {receipt.payment?.amount || receipt.amount} KES
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main}}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText}}>
                       <strong>Mode of Payment:</strong> {receipt.payment?.modeOfPayment || receipt.modeOfPayment}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText}}>
                       <strong>Paid By:</strong> {receipt.payment?.firstName || receipt.paidBy}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                       <strong>Transaction ID:</strong> {receipt.payment?.transactionId || receipt.transactionCode}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                       <strong>Reference:</strong> {receipt.payment?.ref || "N/A"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                       <strong>Receipted:</strong> {receipt.payment?.receipted ? "Yes" : "No"}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
-                      <strong>Date:</strong> {new Date(receipt.payment?.createdAt || receipt.createdAt).toLocaleString()}
+                    <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
+                    <strong>Date:</strong>{" "}
+{(() => {
+  const date = new Date(receipt.payment?.createdAt || receipt.createdAt);
+  date.setHours(date.getHours() - 1); // Offset by -1 hour
+  return date.toLocaleString();
+})()}
+
                     </Typography>
                   </Grid>
                 </Grid>
@@ -241,54 +258,58 @@ const ReceiptDetail = () => {
 
           {/* Invoices Affected */}
           <Grid item xs={12}>
-            <Card sx={{ bgcolor: theme.palette.grey[100], borderRadius: 2 }}>
+            <Card sx={{  borderRadius: 2 }}>
               <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2, color: theme.palette.primary.main }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2, color: theme.palette.primary.contrastText }}>
                   Invoices Affected
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
+                <Divider sx={{ mb: 2 }} />  
                 {receipt.receiptInvoices?.length > 0 ? (
                   receipt.receiptInvoices.map((ri, index) => (
                     <Box key={index} sx={{ mb: index < receipt.receiptInvoices.length - 1 ? 2 : 0 }}>
                       <Grid container spacing={1}>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                          <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                             <strong>Invoice ID:</strong> {ri.invoice?.id || "N/A"}
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                          <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                             <strong>Invoice Number:</strong> {ri.invoice?.invoiceNumber || "N/A"}
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                          <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                             <strong>Amount:</strong> {ri.invoice?.invoiceAmount || 0} KES
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                          <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                             <strong>Amount Paid:</strong> {ri.invoice?.amountPaid || 0} KES
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                          <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                             <strong>Closing Balance:</strong> {ri.invoice?.closingBalance || 0} KES
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                          <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                             <strong>Status:</strong> {ri.invoice?.status || "N/A"}
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
+                          <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
                             <strong>Period:</strong> {new Date(ri.invoice?.invoicePeriod).toLocaleDateString() || "N/A"}
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                          <Typography variant="body2" sx={{color: theme.palette.primary.main }}>
-                            <strong>Created At:</strong> {new Date(ri.invoice?.createdAt).toLocaleString() || "N/A"}
+                          <Typography variant="body2" sx={{color: theme.palette.primary.contrastText }}>
+                          <strong>Created At:</strong>{" "}
+{ri.invoice?.createdAt
+  ? new Date(new Date(ri.invoice.createdAt).setHours(new Date(ri.invoice.createdAt).getHours() - 1)).toLocaleString()
+  : "N/A"}
+
                           </Typography>
                         </Grid>
                       </Grid>
@@ -315,7 +336,7 @@ const ReceiptDetail = () => {
             startIcon={<DownloadIcon />}
             onClick={handleDownloadReceipt}
             sx={{
-              bgcolor: theme.palette.greenAccent.main,
+             
             color: theme.palette.primary.contrastText,
             "&:hover": { borderColor: theme.palette.greenAccent.main, color: theme.palette.grey },
               px: 3,
@@ -328,7 +349,7 @@ const ReceiptDetail = () => {
             startIcon={<EmailIcon />}
             onClick={handleEmailReceipt}
             sx={{
-              bgcolor: theme.palette.greenAccent.main,
+             
               color: theme.palette.primary.contrastText,
               borderColor: theme.palette.grey[900],
               "&:hover": { borderColor: theme.palette.greenAccent.main, color: theme.palette.grey },

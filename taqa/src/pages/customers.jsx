@@ -23,7 +23,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { useAuthStore } from "../store/authStore";
 
 
-const theme = getTheme();
+
 
 const CustomersScreen = () => {
   const [customers, setCustomers] = useState([]);
@@ -42,6 +42,9 @@ const CustomersScreen = () => {
 
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
+  const theme = getTheme();
+
+ 
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   useEffect(() => {
     if (!currentUser) {
@@ -110,7 +113,8 @@ const CustomersScreen = () => {
       headerName: "View",
       width: 100,
       renderCell: (params) => (
-        <IconButton component={Link} to={`/customer-details/${params.row.id}`} color="theme.palette.greenAccent.main">
+        <IconButton component={Link} to={`/customer-details/${params.row.id}`} sx={{ color: theme?.palette?.primary }} // fallback to green
+>
           <VisibilityIcon />
         </IconButton>
       ),
@@ -120,7 +124,8 @@ const CustomersScreen = () => {
       headerName: "Edit",
       width: 100,
       renderCell: (params) => (
-        <IconButton component={Link} to={`/customer-edit/${params.row.id}`}  color="theme.palette.greenAccent.main">
+        <IconButton component={Link} to={`/customer-edit/${params.row.id}`}  sx={{ color: theme?.palette?.primary}} // fallback to green
+>
           <EditIcon />
         </IconButton>
       ),
@@ -141,7 +146,7 @@ const CustomersScreen = () => {
   ];
 
   return (
-    <Box sx={{ padding: 3, ml: 20 }}>
+    <Box sx={{ bgcolor: theme?.palette?.background?.paper, minHeight: "100vh" }}>
       <Typography component="div" variant="h5" gutterBottom sx={{ padding: 3, ml: 5 }}>
         <TitleComponent title="Customers" />
       </Typography>
@@ -149,31 +154,34 @@ const CustomersScreen = () => {
       {/* Search Bar */}
       <Box sx={{ display: "flex", gap: 2, marginBottom: 2, ml: 10 }}>
   {/* Search Input */}
-  <TextField
-    label="Search by Name or Phone"
-    variant="outlined"
-    size="small"
-    sx={{ width: "400px"  ,
-      "& .MuiOutlinedInput-root": {
-        "& fieldset": { borderColor: theme.palette.grey[300] },
-        "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },
-        "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main },
-      },
-      "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
-      "& .MuiInputBase-input": { color: theme.palette.grey[100] },    }}
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-  
 
-  />
+  <TextField
+  label="Search by Name or Phone"
+  variant="outlined"
+  size="small"
+  sx={{
+    width: "400px",
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": { borderColor: theme?.palette?.grey[300] },
+      "&:hover fieldset": { borderColor: theme?.palette?.greenAccent.main },
+      "&.Mui-focused fieldset": { borderColor: theme?.palette?.greenAccent.main },
+    },
+    "& .MuiInputLabel-root": { color: theme?.palette?.grey[100] },
+
+  }}
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
+/>
+
+
   <Button variant="contained" color="primary" onClick={handleSearch} disabled={isSearching}  sx={{width: "400px",
       "& .MuiOutlinedInput-root": {
-        "& fieldset": { borderColor: theme.palette.grey[300] },
-        "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },
-        "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main },
+        "& fieldset": { borderColor: theme?.palette?.grey[300] },
+        "&:hover fieldset": { borderColor: theme?.palette?.greenAccent.main },
+        "&.Mui-focused fieldset": { borderColor: theme?.palette?.greenAccent.main },
       },
-      "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
-      "& .MuiInputBase-input": { color: theme.palette.grey[100] },}}>
+      "& .MuiInputLabel-root": { color: theme?.palette?.grey[100] },
+      "& .MuiInputBase-input": { color: theme?.palette?.grey[100] },}}>
     {isSearching ? "Searching..." : "Search"}
   </Button>
 

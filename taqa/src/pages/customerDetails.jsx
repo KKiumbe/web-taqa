@@ -124,7 +124,7 @@ const CustomerDetails = () => {
   };
 
   return (
-    <Container sx={{ marginLeft: { sm: "200px", xs: "0px" }, marginTop: { sm: "20px" }, transition: "margin 0.3s ease-in-out" }}>
+    <Container sx={{  transition: "margin 0.3s ease-in-out" }}>
       <Typography variant="h3">
         <TitleComponent title="Customer Details" />
       </Typography>

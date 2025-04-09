@@ -8,24 +8,26 @@ import {
   Card,
   CardContent,
   Typography,
-  Box,
   Autocomplete,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  useTheme,
+  Box,
 } from "@mui/material";
 import axios from "axios";
 import TitleComponent from "../components/title";
 import { useNavigate } from "react-router-dom";
-import { getTheme } from "../store/theme";
 import { useAuthStore } from "../store/authStore";
-import debounce from "lodash/debounce"; // Add lodash for debounce
+import { useThemeStore } from "../store/authStore";
+import debounce from "lodash/debounce";
 
 const CreateInvoice = () => {
   const navigate = useNavigate();
-  const theme = getTheme();
+  const theme = useTheme();
+  const darkMode = useThemeStore((state) => state.darkMode);
   const currentUser = useAuthStore((state) => state.currentUser);
 
   // State management
@@ -37,16 +39,23 @@ const CreateInvoice = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPhoneSearch, setIsPhoneSearch] = useState(false);
-  const [openGenerateDialog, setOpenGenerateDialog] = useState(false); // State for generate all dialog
+  const [openGenerateDialog, setOpenGenerateDialog] = useState(false);
 
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
+
+  // Debug theme
+  useEffect(() => {
+    console.log("Theme Mode:", theme.palette.mode);
+    console.log("background.default:", theme.palette.background.default);
+    console.log("background.paper:", theme.palette.background.paper);
+  }, [theme, darkMode]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!currentUser) navigate("/login");
   }, [currentUser, navigate]);
 
-  // Clean search query (remove content in parentheses)
+  // Clean search query
   const cleanSearchQuery = (query) => query.replace(/\s*\([^)]+\)/g, "").trim();
 
   // Unified search handler
@@ -67,7 +76,7 @@ const CreateInvoice = () => {
 
       if (isPhoneNumber && query.length < 10) {
         setSearchResults([]);
-        return; // Don’t call API until 10 digits
+        return;
       }
 
       const response = await axios.get(url, { params, withCredentials: true });
@@ -104,30 +113,30 @@ const CreateInvoice = () => {
   const debouncedPhoneSearch = useCallback(
     debounce((query) => {
       if (isPhoneSearch) handleSearch(query);
-    }, 500), // 500ms delay
+    }, 500),
     [isPhoneSearch]
   );
 
   // Handle input change for search
   const handleInputChange = (e, value) => {
-    const newValue = e ? e.target.value : value; // Handle both TextField and Autocomplete
+    const newValue = e ? e.target.value : value;
     setSearchQuery(newValue);
     setIsPhoneSearch(/^\d+$/.test(newValue));
-    setSelectedCustomer(null); // Reset selected customer on search type change
+    setSelectedCustomer(null);
 
     if (isPhoneSearch) {
-      debouncedPhoneSearch(newValue); // Debounce phone search
+      debouncedPhoneSearch(newValue);
     } else {
-      handleSearch(newValue); // Immediate name search for Autocomplete
+      handleSearch(newValue);
     }
   };
 
-  // Handle customer selection and clear search query for name search
+  // Handle customer selection
   const handleCustomerSelect = (event, newValue) => {
     setSelectedCustomer(newValue);
     if (!isPhoneSearch && newValue) {
-      setSearchQuery(""); // Clear search query for name search
-      setSearchResults([]); // Clear search results
+      setSearchQuery("");
+      setSearchResults([]);
     }
   };
 
@@ -170,7 +179,7 @@ const CreateInvoice = () => {
   // Generate invoices for all active customers
   const handleGenerateAllConfirm = async () => {
     setLoading(true);
-    setOpenGenerateDialog(false); // Close dialog
+    setOpenGenerateDialog(false);
     try {
       await axios.post(`${BASEURL}/generate-invoices-for-all`, {}, { withCredentials: true });
       setSnackbar({
@@ -199,7 +208,7 @@ const CreateInvoice = () => {
           {searchResults.map((customer) => (
             <Box
               key={customer.id}
-              sx={{ p: 1, cursor: "pointer", "&:hover": { backgroundColor: "#f5f5f5" } }}
+              sx={{ p: 1, cursor: "pointer", "&:hover": { backgroundColor: theme.palette.grey[100] } }}
               onClick={() => setSelectedCustomer(customer)}
             >
               <Typography>{`${customer.firstName} ${customer.lastName} (${customer.phoneNumber})`}</Typography>
@@ -236,26 +245,38 @@ const CreateInvoice = () => {
     );
 
   return (
-    <Box sx={{ maxWidth: 950, padding: 3, ml: 50 }}>
-      <Box sx={{ mb: 3 ,ml:50 }}>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={handleGenerateAllClick}
-          disabled={loading}
-        >
-          {loading ? <CircularProgress size={24} /> : "Generate Invoices for All Customers"}
-        </Button>
-      </Box>
+    <Box
+      sx={{
+        minHeight: "100vh", // Full page height
+        width: "100%", // Full width
+        bgcolor: theme.palette.background.paper, // Uniform background
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center", // Center content
+        justifyContent: "center", // Vertically center if needed
+        p: 0, // Remove default padding
+      }}
+    >
 
-      <TitleComponent title="Create an Invoice" />
-      
-      {/* Generate Invoices for All Button */}
-      
+          {/* Generate Invoices for All Button */}
+          <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end", ml:100 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleGenerateAllClick}
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : "Generate Invoices for All Customers"}
+          </Button>
+        </Box>
+      {/* Main Content */}
+      <Box sx={{ maxWidth: 600, width: "100%" }}>
+        <TitleComponent title="Create an Invoice" />
 
-      {/* Search Input */}
-      {isPhoneSearch ? (
-        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+    
+
+        {/* Search Input */}
+        {isPhoneSearch ? (
           <TextField
             label="Search Customer by Phone"
             variant="outlined"
@@ -263,74 +284,74 @@ const CreateInvoice = () => {
             onChange={handleInputChange}
             fullWidth
             disabled={isSearching}
-            inputProps={{ maxLength: 15 }} // Limit input length if needed
+            inputProps={{ maxLength: 15 }}
+            sx={{ mb: 2 }}
           />
-        </Box>
-      ) : (
-        <Autocomplete
-          options={searchResults}
-          getOptionLabel={(option) => `${option?.firstName} ${option?.lastName} (${option?.phoneNumber})`}
-          onInputChange={handleInputChange}
-          onChange={handleCustomerSelect}
-          loading={isSearching}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Search Customer by Name"
-              variant="outlined"
-              fullWidth
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: isSearching ? <CircularProgress size={20} /> : params.InputProps.endAdornment,
-              }}
-            />
-          )}
-          sx={{ mb: 2 }}
+        ) : (
+          <Autocomplete
+            options={searchResults}
+            getOptionLabel={(option) => `${option?.firstName} ${option?.lastName} (${option?.phoneNumber})`}
+            onInputChange={handleInputChange}
+            onChange={handleCustomerSelect}
+            loading={isSearching}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Search Customer by Name"
+                variant="outlined"
+                fullWidth
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: isSearching ? <CircularProgress size={20} /> : params.InputProps.endAdornment,
+                }}
+              />
+            )}
+            sx={{ mb: 2 }}
+          />
+        )}
+
+        {/* Phone Search Results */}
+        {isPhoneSearch && renderPhoneSearchResults()}
+
+        {/* Selected Customer */}
+        {renderSelectedCustomer()}
+
+        {/* Invoice Form */}
+        <TextField
+          label="Description"
+          value={formData.description}
+          onChange={handleFormChange("description")}
+          fullWidth
+          margin="normal"
         />
-      )}
+        <TextField
+          label="Amount"
+          value={formData.amount}
+          onChange={handleFormChange("amount")}
+          fullWidth
+          margin="normal"
+          type="number"
+        />
+        <TextField
+          label="Quantity"
+          value={formData.quantity}
+          onChange={handleFormChange("quantity")}
+          fullWidth
+          margin="normal"
+          type="number"
+          inputProps={{ min: 0, step: 1 }}
+        />
 
-      {/* Phone Search Results */}
-      {isPhoneSearch && renderPhoneSearchResults()}
-
-      {/* Selected Customer */}
-      {renderSelectedCustomer()}
-
-      {/* Invoice Form */}
-      <TextField
-        label="Description"
-        value={formData.description}
-        onChange={handleFormChange("description")}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Amount"
-        value={formData.amount}
-        onChange={handleFormChange("amount")}
-        fullWidth
-        margin="normal"
-        type="number"
-      />
-      <TextField
-        label="Quantity"
-        value={formData.quantity}
-        onChange={handleFormChange("quantity")}
-        fullWidth
-        margin="normal"
-        type="number"
-        inputProps={{ min: 0, step: 1 }}
-      />
-
-      <Box sx={{ mt: 2 }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleCreateInvoice}
-          disabled={loading}
-          sx={{ color: theme.palette.greenAccent.main }}
-        >
-          {loading ? <CircularProgress size={24} /> : "Create Invoice"}
-        </Button>
+        <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCreateInvoice}
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : "Create Invoice"}
+          </Button>
+        </Box>
       </Box>
 
       {/* Generate Invoices for All Confirmation Dialog */}

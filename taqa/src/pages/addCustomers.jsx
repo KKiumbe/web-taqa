@@ -114,9 +114,9 @@ const handleSubmit = async (e) => {
         width: "70%",
         padding: 3,
         margin: "auto",
-        ml:30,
+       
         mt: 5,
-        backgroundColor: theme.palette.primary.main, // Background color from theme
+        //backgroundColor: theme.palette.primary.main, // Background color from theme
         boxShadow: theme.shadows[3],
         color: theme.palette.grey[100], // Text color from theme
       }}

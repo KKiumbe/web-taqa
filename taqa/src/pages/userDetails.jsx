@@ -146,7 +146,7 @@ const UserDetails = () => {
     <Box
       sx={{
         p: 4,
-        ml: { xs: 0, md: 55 },
+      ml:30,
         display: "flex",
         justifyContent: "center",
         minHeight: "100vh",

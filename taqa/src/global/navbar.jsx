@@ -152,7 +152,7 @@ const Navbar = () => {
   };
 
   const profileDrawer = (
-    <Box sx={{ width: 300, p: 2 }}>
+    <Box sx={{ width: 300, }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
         <Typography variant="h6">Profile</Typography>
         <IconButton

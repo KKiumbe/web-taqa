@@ -132,7 +132,8 @@ const EditOrganization = () => {
     <Box
       sx={{
         p: { xs: 2, md: 4 },
-        ml: { xs: 0, md: "220px" },
+        ml: { xs: 0, md: 2, lg: 4 },
+
         display: "flex",
         justifyContent: "center",
         minHeight: "100vh",

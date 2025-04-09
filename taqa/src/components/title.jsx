@@ -1,7 +1,10 @@
 import React from "react";
 import { Typography, Box } from "@mui/material";
+import { getTheme } from "../store/theme";
 
 const TitleComponent = ({ title }) => {
+
+  const theme = getTheme();
   return (
     <Box
       sx={{
@@ -11,13 +14,18 @@ const TitleComponent = ({ title }) => {
        // Centers the text
         display: "flex",
         justifyContent: 'flex-start',
-        paddingLeft:10
+        paddingLeft:10,
+        //color: theme.palette.primary.contrastText,
+      
+        //backgroundColor: theme.palette.primary.contrastText,
       }}
     >
       <Typography
         variant="h5"
         fontWeight="bold"
-        sx={{ fontSize: { xs: "1.5rem", sm: "1.8rem" } }} 
+        sx={{ fontSize: { xs: "1.5rem", sm: "1.8rem", 
+          color: theme.palette.primary.contrastText,
+        } }} 
       >
         {title}
       </Typography>

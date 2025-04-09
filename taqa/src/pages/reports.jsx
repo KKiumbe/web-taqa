@@ -158,9 +158,9 @@ const ReportScreen = () => {
 
   return (
    
-    <Container>
+    <Container sx={{ width: '100%', ml:20}}>
 
-<Box sx={{ maxWidth: 1200, minWidth: 800, p: 3, ml: open ? 40 : 9 }}>
+<Box >
         <Typography variant="h5" gutterBottom>
          <TitleComponent title="Reports Center" />
         </Typography>
@@ -169,6 +169,9 @@ const ReportScreen = () => {
           onChange={handleTabChange}
           aria-label="report tabs"
           sx={{
+            minWidth: 500,
+            maxWidth: 1200,
+            width: '100%',
             color: theme.palette.primary.contrastText,
             mb: 3,
             border: `1px solid ${theme.palette.primary.light}`,

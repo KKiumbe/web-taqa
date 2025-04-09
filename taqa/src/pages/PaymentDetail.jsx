@@ -292,11 +292,11 @@ const PaymentDetails = () => {
     <Fade in={!loading}>
       <Box
         sx={{
-          maxWidth: 900,
+          width: "100%",
           mx: "auto",
           p: 3,
           mt: 2,
-          ml: 35,
+        ml:20,
           position: "relative",
         }}
       >
@@ -321,8 +321,11 @@ const PaymentDetails = () => {
             mb: 3,
             borderRadius: 2,
             boxShadow: 3,
-            bgcolor: theme.palette.primary.main,
+         
             color: theme.palette.grey[100],
+            width: "50%",
+            ml: 20,
+          
           }}
         >
           <CardHeader
@@ -336,7 +339,7 @@ const PaymentDetails = () => {
                 </IconButton>
               )
             }
-            sx={{ bgcolor: theme.palette.grey[300] }}
+          
           />
           <CardContent>
             <Grid container spacing={2}>
@@ -395,7 +398,11 @@ const PaymentDetails = () => {
                 <Typography variant="subtitle2" color={theme.palette.grey[100]}>
                   Created At
                 </Typography>
-                <Typography variant="body1">{new Date(payment.createdAt).toLocaleString()}</Typography>
+              
+                <Typography variant="body1">
+  {new Date(new Date(payment.createdAt).setHours(new Date(payment.createdAt).getHours() - 1)).toLocaleString()}
+</Typography>
+
               </Grid>
             </Grid>
           </CardContent>
@@ -698,7 +705,7 @@ const PaymentDetails = () => {
           </Alert>
         </Snackbar>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 3 }}>
           <Button
             variant="outlined"
             sx={{

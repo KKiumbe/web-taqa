@@ -180,10 +180,10 @@ const CreatePayment = () => {
   );
 
   return (
-    <Box sx={{ maxWidth: 700, mx: "auto", p: 3, mt: 2, ml: 60 }}>
+    <Box sx={{  p: 3, justifyContent: "left", alignItems: "center", width: "100vw", margin: 0, boxSizing: "border-box" }}>
       <TitleComponent title="Create Payment" />
-      <Paper sx={{ p: 3, bgcolor: theme.palette.primary.main }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 2, color: theme.palette.grey[100] }}>
+      <Paper sx={{ maxWidth:600, ml:30}}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2, color: theme.palette.grey[100], justifyContent: "center", alignItems: "center" , ml:20 }}>
           Search Customer
         </Typography>
         
@@ -197,6 +197,9 @@ const CreatePayment = () => {
             disabled={isSearching}
             inputProps={{ maxLength: 15 }}
             sx={{
+              maxWidth: "300px",
+              justifyContent: "center",
+              ml:20,
               "& .MuiOutlinedInput-root": {
                 "& fieldset": { borderColor: theme.palette.grey[300] },
                 "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },
@@ -225,6 +228,9 @@ const CreatePayment = () => {
                   endAdornment: isSearching ? <CircularProgress size={20} /> : params.InputProps.endAdornment,
                 }}
                 sx={{
+                  maxWidth: "300px",
+                  justifyContent: "center",
+                  ml:20,
                   "& .MuiOutlinedInput-root": {
                     "& fieldset": { borderColor: theme.palette.grey[300] },
                     "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },

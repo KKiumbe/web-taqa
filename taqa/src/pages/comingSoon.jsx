@@ -27,7 +27,8 @@ const ComingSoonPage = () => {
           maxWidth: 1200,
           minWidth: 800,
           p: 3,
-          ml: open ? 40 : 9, // Adjust based on sidebar state
+          ml:10,
+          
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

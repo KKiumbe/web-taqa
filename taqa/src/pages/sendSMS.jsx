@@ -113,27 +113,25 @@ function SmsScreen() {
   return (
     <Container
       sx={{
-        ml: 30, // 200px left on small+ screens
-        mt: { sm: '20px' }, // 20px top margin on small+ screens
-        transition: 'margin 0.3s ease-in-out',
-        maxWidth: false, // Disable default centering
+ ml: { xs: 10, sm: 20 },
+ width: '100%',
       }}
     >
        <Typography
           variant="h4"
-          sx={{ color: theme.palette.primary.contrastText, mb: 2 ,ml:5}} // Primary color for title
+          sx={{ color: theme.palette.primary.contrastText, mb: 2}} // Primary color for title
         >
           <TitleComponent title= "SMS Center"/>
         </Typography>
          
       <Box
         sx={{
-          maxWidth: 800,
+          maxWidth: '100%',
           ml: { xs: 0, sm: 2 }, // Additional 16px left shift on small+ screens
           mt: 4,
           p: 3,
           borderRadius: 2,
-          bgcolor: "background.paper"
+        
         }}
       >
 
@@ -154,7 +152,7 @@ function SmsScreen() {
             borderRadius: 2,
            
             '& .MuiTab-root': { color: theme.palette.primary.contrastText }, // Unselected tabs
-            '& .Mui-selected': { color: theme.palette.greenAccent.main , }, // Selected tab
+            '& .Mui-selected': { color: theme.palette.primary.contrastText , }, // Selected tab
           }}
         >
           <Tab label="Single SMS" />

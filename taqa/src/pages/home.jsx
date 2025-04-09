@@ -11,8 +11,6 @@ import PieChartComponent from "../components/pieChart";
 import LastPayments from "../components/payments";
 import PaymentModesPieChart from "../components/paymentsChart";
 
-//const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
-
 const HomeScreen = () => {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [payments, setPayments] = useState([]);
@@ -80,6 +78,8 @@ const HomeScreen = () => {
           alignItems: "center",
           height: "100vh",
           bgcolor: theme?.palette?.background?.default || "#f5f5f5",
+          width: "100vw",
+          margin: 0,
         }}
       >
         <CircularProgress color="primary" />
@@ -92,12 +92,10 @@ const HomeScreen = () => {
   return (
     <Box
       sx={{
-        maxWidth: "1400px",
-        mx: "auto",
-        p: 5,
-        bgcolor: theme?.palette?.background?.paper || "#fff",
-        minHeight: "100vh",
-        ml: 25,
+        width: "100vw",
+        margin: 0,
+        padding: 2,
+        boxSizing: "border-box",
       }}
     >
       <Typography
@@ -111,18 +109,26 @@ const HomeScreen = () => {
       >
         Hi {currentUser.firstName}!
       </Typography>
-      <Typography variant="h6" sx={{ mb: 3 }}>
-        Customers
-      </Typography>
+   
       <Box
-        display="grid"
-        gridTemplateColumns={{ xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}
-        gap={3}
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",              // 1 column on extra small screens
+            sm: "repeat(2, 1fr)",    // 2 columns on small screens
+            md: "repeat(3, 1fr)",    // 3 columns on medium screens
+            lg: "repeat(4, 1fr)",    // 4 columns on large screens
+          },
+          gap: 2,                    // Reduced gap between cards (was 3)
+          maxWidth: "1400px",        // Set a maximum width for the grid
+          mx: "auto",  
+          paddingRight:30           // Center the grid
+        }}
       >
         <Card
           sx={{
-            minWidth: 200,
-            maxWidth: 250,
+            width: "100%",           // Full width of grid cell
+            maxWidth: 250,          // Maximum card width
             maxHeight: 250,
             boxShadow: 3,
             bgcolor: theme?.palette?.background?.default || "#fafafa",
@@ -138,7 +144,7 @@ const HomeScreen = () => {
 
         <Card
           sx={{
-            minWidth: 200,
+            width: "100%",
             maxWidth: 250,
             maxHeight: 250,
             boxShadow: 3,
@@ -165,7 +171,7 @@ const HomeScreen = () => {
 
         <Card
           sx={{
-            minWidth: 200,
+            width: "100%",
             maxWidth: 250,
             maxHeight: 250,
             boxShadow: 3,
@@ -181,7 +187,6 @@ const HomeScreen = () => {
               gutterBottom
               sx={{ color: theme?.palette?.primary.dark || "#666" }}
             >
-           
             </Typography>
             <ProgressBarComponent
               data={
@@ -196,7 +201,7 @@ const HomeScreen = () => {
 
         <Card
           sx={{
-            minWidth: 200,
+            width: "100%",
             maxWidth: 250,
             maxHeight: 300,
             boxShadow: 3,
@@ -223,7 +228,13 @@ const HomeScreen = () => {
         </Card>
       </Box>
 
-      <Box sx={{ mt: 5 }}>
+      
+      <Box sx={{ 
+        mt: 5, 
+        maxWidth: "1600px", 
+        mx: "auto", 
+        bgcolor: theme?.palette?.background?.paper || "#fafafa",
+      }}>
         <Typography variant="h6" sx={{ mb: 3 }}>
           Recent Transactions
         </Typography>
@@ -231,36 +242,36 @@ const HomeScreen = () => {
           sx={{
             display: "flex",
             flexDirection: { xs: "column", md: "row" }, // Stack on small screens, row on medium+
-            gap: 3,
+            gap: 10,
             justifyContent: "flex-start",
             alignItems: "flex-start",
+            width: "100%",
+            bgcolor: theme?.palette?.background?.paper || "#fafafa",
           }}
         >
           <Card
             sx={{
-              minWidth: 400,
-            
+              flex: { md: 1 }, // Equal flex growth on medium screens and up
+              maxWidth: { xs: "100%", md: 600 },
               boxShadow: 3,
-              bgcolor: theme?.palette?.background?.default || "#fafafa",
+              bgcolor: theme?.palette?.background.paper || "#fafafa",
               borderRadius: 2,
               transition: "transform 0.2s",
               "&:hover": { transform: "scale(1.02)" },
+              width: "100%",
             }}
           >
-            <CardContent   
-         
-            >
+            <CardContent>
               <LastPayments payments={payments} />
             </CardContent>
           </Card>
 
           <Card
             sx={{
-              minWidth: 200,
-          
+              flex: { md: 1 }, // Equal flex growth on medium screens and up
+              maxWidth: { xs: "100%", md: 300 },
               boxShadow: 3,
-              ml:10,
-              bgcolor: theme?.palette?.background?.default || "#fafafa",
+              bgcolor: theme?.palette?.background?.paper || "#fafafa",
               borderRadius: 2,
               transition: "transform 0.2s",
               "&:hover": { transform: "scale(1.02)" },

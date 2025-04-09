@@ -58,7 +58,7 @@ const LastPayments = ({ payments }) => {
           p: 3,
           borderRadius: 4,
           boxShadow: `0 10px 40px ${theme.palette.primary.dark}50`, // Dramatic shadow
-          background: `linear-gradient(145deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 70%)`, // Bold gradient
+          background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.main} 70%)`, // Bold gradient
           border: `2px solid ${theme.palette.greenAccent.main}30`, // Accent border
           width: 600, // Adjusted width for more content
           maxHeight: 400,
@@ -73,7 +73,7 @@ const LastPayments = ({ payments }) => {
           <Typography
             variant="h5"
             sx={{
-              color: theme.palette.grey[100],
+              color: theme.palette.primary.contrastText,
               fontWeight: "bold",
               textTransform: "uppercase",
               letterSpacing: 2,
@@ -116,7 +116,7 @@ const LastPayments = ({ payments }) => {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: theme.palette.grey[200],
+                      color: theme.palette.primary.contrastText,
                       fontWeight: "medium",
                     }}
                   >
@@ -136,7 +136,7 @@ const LastPayments = ({ payments }) => {
                 <Typography
                   variant="caption"
                   sx={{
-                    color: theme.palette.grey[400],
+                    color: theme.palette.primary.contrastText,
                     fontSize: "0.75rem",
                   }}
                 >

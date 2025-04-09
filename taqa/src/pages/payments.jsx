@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { DataGrid } from "@mui/x-data-grid";
+import axios from "axios";
 import {
-  IconButton,
+  DataGrid,
+  GridToolbarContainer,
+  GridToolbarExport,
+} from "@mui/x-data-grid";
+import {
+  CircularProgress,
+  Typography,
   Box,
   TextField,
   Button,
-  CircularProgress,
-  Typography,
-  Chip,
+  Snackbar,
+  IconButton,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Snackbar,
+  Chip,
   Alert,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -20,10 +25,9 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import TitleComponent from "../components/title";
-import axios from "axios";
 import { getTheme } from "../store/theme";
 
-// Function to flatten the nested payment response
+// Flatten nested payment response
 const flattenPayments = (payments) => {
   return payments.map((payment) => {
     const receipt = payment.receipt || {};
@@ -68,55 +72,44 @@ const Payments = () => {
   const theme = getTheme();
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
-  // Redirect to login if no user
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");
     }
   }, [currentUser, navigate]);
 
-  // Fetch payments on initial mount
   useEffect(() => {
     if (currentUser) {
       fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
     }
   }, [currentUser]);
 
-  // Fetch payments when filters or pagination change
   useEffect(() => {
     if (currentUser && !searchQuery) {
       fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
     }
   }, [paginationModel, modeFilter, showUnreceiptedOnly, currentUser]);
 
-  // Handle closing the Snackbar
   const handleCloseSnackbar = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
+    if (reason === "clickaway") return;
     setOpenSnackbar(false);
-    setError(null); // Clear error after closing
+    setError(null);
   };
 
-  // Fetch all payments or filtered by mode/unreceipted-only
   const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
     setLoading(true);
     setError(null);
     try {
-      const endpoint = unreceiptedOnly
-        ? `${BASEURL}/payments/unreceipted`
-        : `${BASEURL}/payments`;
+      const endpoint = unreceiptedOnly ? `${BASEURL}/payments/unreceipted` : `${BASEURL}/payments`;
       const params = { page: page + 1, limit: pageSize };
       if (mode !== "all") params.mode = mode;
 
-      const response = await axios.get(endpoint, {
-        params,
-        withCredentials: true,
-      });
+      const response = await axios.get(endpoint, { params, withCredentials: true });
       const { payments: fetchedPayments, total } = response.data;
       const flattenedData = flattenPayments(fetchedPayments || []);
       setPayments(flattenedData);
       setRowCount(total || 0);
+      console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
     } catch (err) {
       setError(
         err.response?.status === 404
@@ -124,7 +117,6 @@ const Payments = () => {
           : err.response?.data?.error || "Failed to fetch payments."
       );
       setOpenSnackbar(true);
-      console.error("Error fetching payments:", err);
       setPayments([]);
       setRowCount(0);
     } finally {
@@ -132,7 +124,6 @@ const Payments = () => {
     }
   };
 
-  // Fetch payments by name
   const fetchPaymentsByName = async (page, pageSize, query) => {
     setLoading(true);
     setError(null);
@@ -152,7 +143,6 @@ const Payments = () => {
           : err.response?.data?.error || "Failed to search payments by name."
       );
       setOpenSnackbar(true);
-      console.error("Error fetching payments by name:", err);
       setPayments([]);
       setRowCount(0);
     } finally {
@@ -160,7 +150,6 @@ const Payments = () => {
     }
   };
 
-  // Fetch payment by transaction ID
   const fetchPaymentByTransactionId = async (page, pageSize, query) => {
     setLoading(true);
     setError(null);
@@ -180,7 +169,6 @@ const Payments = () => {
           : err.response?.data?.error || "Failed to search payment by transaction ID."
       );
       setOpenSnackbar(true);
-      console.error("Error fetching payment by transaction ID:", err);
       setPayments([]);
       setRowCount(0);
     } finally {
@@ -188,7 +176,6 @@ const Payments = () => {
     }
   };
 
-  // Fetch payments by ref number
   const fetchPaymentsByRef = async (page, pageSize, query) => {
     setLoading(true);
     setError(null);
@@ -201,6 +188,8 @@ const Payments = () => {
       const flattenedData = flattenPayments(fetchedPayments || []);
       setPayments(flattenedData);
       setRowCount(total || 0);
+
+      console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
     } catch (err) {
       setError(
         err.response?.status === 404
@@ -208,7 +197,6 @@ const Payments = () => {
           : err.response?.data?.error || "Failed to search payments by ref number."
       );
       setOpenSnackbar(true);
-      console.error("Error fetching payments by ref:", err);
       setPayments([]);
       setRowCount(0);
     } finally {
@@ -216,13 +204,9 @@ const Payments = () => {
     }
   };
 
-  const handleEditPress = (id) => {
-    navigate(`/payments/${id}`);
-  };
+  const handleEditPress = (id) => navigate(`/payments/${id}`);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
+  const handleSearchChange = (e) => setSearchQuery(e.target.value);
 
   const handleSearchTypeChange = (e) => {
     setSearchType(e.target.value);
@@ -259,9 +243,7 @@ const Payments = () => {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
+    if (e.key === "Enter") handleSearch();
   };
 
   const handleFilterUnreceipted = () => {
@@ -290,6 +272,32 @@ const Payments = () => {
     },
     { field: "amount", headerName: "Amount (KES)", width: 150 },
     { field: "modeOfPayment", headerName: "Mode of Payment", width: 180 },
+    {
+      field: "createdAt",
+      headerName: "Date",
+      width: 200,
+      renderCell: (params) => {
+        if (!params?.value) return "N/A";
+    
+        try {
+          const date = new Date(params.value);
+          date.setHours(date.getHours() - 1); // Subtract 1 hour to correct time
+    
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = date.toLocaleString('default', { month: 'short' });
+          const year = date.getFullYear();
+    
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+          return `${day} ${month} ${year}, ${hours}:${minutes}:${seconds}`;
+        } catch (error) {
+          console.error("Invalid Date:", params.value);
+          return "Invalid Date";
+        }
+      },
+    },
     { field: "transactionId", headerName: "Transaction ID", width: 200 },
     { field: "firstName", headerName: "Customer Name", width: 180 },
     { field: "ref", headerName: "Reference Number", width: 180 },
@@ -340,27 +348,10 @@ const Payments = () => {
           "N/A"
         ),
     },
-    {
-      field: "createdAt",
-      headerName: "Payment Date Sent",
-      width: 180,
-      renderCell: (params) => {
-        if (!params?.value) return "N/A";
-        try {
-          return new Date(params.value).toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          });
-        } catch (error) {
-          console.error("Invalid Date:", params.value);
-          return "Invalid Date";
-        }
-      },
-    },
+    
+    
+    
+
     {
       field: "actions",
       headerName: "Actions",
@@ -379,10 +370,10 @@ const Payments = () => {
   ];
 
   return (
-    <Box sx={{ minHeight: 500, width: "100%", padding: 2, ml: 30, minWidth: 1200, maxWidth: 1600 }}>
+    <Box sx={{ p: 3 }}>
       <TitleComponent title="Payments" />
 
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
         <FormControl sx={{ minWidth: 150 }}>
           <InputLabel id="search-type-label">Search By</InputLabel>
           <Select
@@ -394,6 +385,8 @@ const Payments = () => {
               "& .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.grey[300] },
               "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.greenAccent.main },
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.greenAccent.main },
+              "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
+              "& .MuiSelect-select": { color: theme.palette.grey[100] },
             }}
           >
             <MenuItem value="name">Name</MenuItem>
@@ -409,25 +402,24 @@ const Payments = () => {
           onChange={handleSearchChange}
           onKeyPress={handleKeyPress}
           sx={{
-            width: "400px",
+            width: 400,
             "& .MuiOutlinedInput-root": {
               "& fieldset": { borderColor: theme.palette.grey[300] },
               "&:hover fieldset": { borderColor: theme.palette.greenAccent.main },
               "&.Mui-focused fieldset": { borderColor: theme.palette.greenAccent.main },
             },
-            "& .MuiInputLabel-root": { color: theme.palette.grey[500] },
-            "& .MuiInputBase-input": { color: theme.palette.primary },
+            "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
+            "& .MuiInputBase-input": { color: theme.palette.grey[100] },
           }}
         />
-
-
-          <Button
+        <Button
           variant="contained"
           onClick={handleSearch}
           sx={{
             bgcolor: theme.palette.greenAccent.main,
             color: theme.palette.grey[100],
             "&:hover": { bgcolor: theme.palette.greenAccent.dark },
+            width: 150,
           }}
         >
           Search
@@ -443,6 +435,8 @@ const Payments = () => {
               "& .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.grey[300] },
               "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.greenAccent.main },
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: theme.palette.greenAccent.main },
+              "& .MuiInputLabel-root": { color: theme.palette.grey[100] },
+              "& .MuiSelect-select": { color: theme.palette.grey[100] },
             }}
           >
             <MenuItem value="all">All</MenuItem>
@@ -451,7 +445,6 @@ const Payments = () => {
             <MenuItem value="BANK_TRANSFER">Bank Transfer</MenuItem>
           </Select>
         </FormControl>
-      
         <Button
           variant={showUnreceiptedOnly ? "contained" : "outlined"}
           onClick={handleFilterUnreceipted}
@@ -459,9 +452,7 @@ const Payments = () => {
             bgcolor: showUnreceiptedOnly ? "#ff9800" : "transparent",
             color: showUnreceiptedOnly ? theme.palette.grey[100] : "#ff9800",
             borderColor: "#ff9800",
-            "&:hover": {
-              bgcolor: showUnreceiptedOnly ? "#f57c00" : "#ff980033",
-            },
+            "&:hover": { bgcolor: showUnreceiptedOnly ? "#f57c00" : "#ff980033" },
           }}
         >
           {showUnreceiptedOnly ? "Show All Payments" : "Show Unreceipted Only"}
@@ -469,7 +460,7 @@ const Payments = () => {
       </Box>
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "50vh" }}>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
           <CircularProgress size={70} sx={{ color: theme.palette.greenAccent.main }} />
         </Box>
       ) : (
@@ -485,31 +476,38 @@ const Payments = () => {
           pageSizeOptions={[10, 20, 50]}
           disableSelectionOnClick
           sx={{
-            height: "70%",
-            minHeight: 400,
-            "& .MuiDataGrid-row": {
-              "&:hover": { bgcolor: theme.palette.grey[800] },
+            bgcolor: theme.palette.background.paper,
+            "& .MuiDataGrid-columnHeaders": {
+              bgcolor: theme.palette.primary.main,
+              color: theme.palette.grey[100],
             },
+            "& .MuiDataGrid-cell": { color: theme.palette.grey[100] },
+            ml: "auto",
+            mr: "auto",
+            maxWidth: "100%",
+          }}
+          components={{
+            Toolbar: () => (
+              <GridToolbarContainer>
+                <GridToolbarExport />
+              </GridToolbarContainer>
+            ),
           }}
         />
       )}
       {!loading && (
-        <Typography sx={{ textAlign: "center", mt: 2, color: theme.palette.grey[900] }}>
+        <Typography sx={{ textAlign: "center", mt: 2, color: theme.palette.grey[100] }}>
           Page {paginationModel.page + 1} of {Math.ceil(rowCount / paginationModel.pageSize) || 1}
         </Typography>
       )}
 
       <Snackbar
         open={openSnackbar}
-        autoHideDuration={6000} // Hides after 6 seconds
+        autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }} // Position at top center
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: "100%" }}>
           {error}
         </Alert>
       </Snackbar>

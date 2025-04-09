@@ -133,18 +133,20 @@ const InvoiceDetails = () => {
   return (
     <Card
       sx={{
-        maxWidth: 900,
+      width: "100%",
+        maxWidth: 600,
         margin: "auto",
         padding: 3,
         mt: 4,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-end",
         minHeight: "80vh",
-        ml: 50,
+      
         bgcolor: theme.palette.primary.main,
         position: "relative",
+        ml:30
       }}
     >
       {/* Back Icon Button at Top Left */}
