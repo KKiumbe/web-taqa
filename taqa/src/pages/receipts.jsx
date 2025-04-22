@@ -89,7 +89,7 @@ const Receipts = () => {
       const flattenedData = flattenReceipts(fetchedReceipts || []);
       setReceipts(flattenedData);
       setRowCount(total || 0);
-      console.log("Flattened Receipts:", JSON.stringify(flattenedData, null, 2));
+      //console.log("Flattened Receipts:", JSON.stringify(flattenedData, null, 2));
     } catch (err) {
       let errorMessage = "Failed to fetch receipts.";
       if (err.code === "ERR_NETWORK") {

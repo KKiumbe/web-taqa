@@ -29,7 +29,7 @@ const Login = () => {
     setError("");
 
     try {
-      console.log(`this is base url ${BASEURL}`);
+      //console.log(`this is base url ${BASEURL}`);
       const response = await axios.post(
         `${BASEURL}/signin`,
         { phoneNumber, password },

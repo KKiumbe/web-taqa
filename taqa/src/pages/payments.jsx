@@ -109,7 +109,7 @@ const Payments = () => {
       const flattenedData = flattenPayments(fetchedPayments || []);
       setPayments(flattenedData);
       setRowCount(total || 0);
-      console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
+      //console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
     } catch (err) {
       setError(
         err.response?.status === 404
@@ -189,7 +189,7 @@ const Payments = () => {
       setPayments(flattenedData);
       setRowCount(total || 0);
 
-      console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
+      //console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
     } catch (err) {
       setError(
         err.response?.status === 404
@@ -293,7 +293,7 @@ const Payments = () => {
     
           return `${day} ${month} ${year}, ${hours}:${minutes}:${seconds}`;
         } catch (error) {
-          console.error("Invalid Date:", params.value);
+          //console.error("Invalid Date:", params.value);
           return "Invalid Date";
         }
       },

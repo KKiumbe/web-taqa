@@ -94,7 +94,7 @@ function SendBillsScreen() {
         params: { name: value },
         withCredentials: true,
       });
-      console.log(`Name search response: ${JSON.stringify(response.data)}`);
+      //console.log(`Name search response: ${JSON.stringify(response.data)}`);
       setSearchResults(Array.isArray(response.data) ? response.data : []);
       setSearchPerformed(true);
     } catch (error) {
@@ -129,7 +129,7 @@ function SendBillsScreen() {
         params: { phone: searchQuery },
         withCredentials: true,
       });
-      console.log(`Phone search response: ${JSON.stringify(response.data)}`);
+      //console.log(`Phone search response: ${JSON.stringify(response.data)}`);
       const customer = response.data;
       setSearchResults(customer ? [customer] : []);
     } catch (error) {

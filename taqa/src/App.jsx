@@ -37,6 +37,9 @@ import UserDetails from "./pages/userDetails";
 import AddUser from "./pages/addUser";
 import Organization from "./pages/orgDetails";
 import EditOrganization from "./pages/editOrg";
+import AssignTaskScreen from "./pages/createTask";
+import FetchTasksScreen from "./pages/fetchTasks";
+import TaskDetailsScreen from "./pages/taskDetails";
 
 const App = () => {
   const { darkMode } = useThemeStore();
@@ -271,6 +274,34 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
+
+
+                  <Route
+                  path="tasks/create"
+                  element={
+                    <ProtectedRoute>
+                      <AssignTaskScreen />
+                    </ProtectedRoute>
+                  }
+                />
+
+                  <Route
+                  path="tasks"
+                  element={
+                    <ProtectedRoute>
+                      <FetchTasksScreen />
+                    </ProtectedRoute>
+                  }
+                />  
+
+<Route
+                  path="task-details/:taskId"
+                  element={
+                    <ProtectedRoute>
+                      <TaskDetailsScreen />
+                    </ProtectedRoute>
+                  }
+                />  
               </Routes>
             </Box>
           </Box>

@@ -67,7 +67,7 @@ const handleSubmit = async (e) => {
     return;
   }
 
-  console.log(`Submitting customer for tenant ID: ${currentUser.tenantId}`);
+  //console.log(`Submitting customer for tenant ID: ${currentUser.tenantId}`);
 
   const customerData = { ...formData, tenantId: currentUser.tenantId };
 
@@ -81,7 +81,7 @@ const handleSubmit = async (e) => {
   try {
     await axios.post(`${BASEURL}/customers`, customerData, { withCredentials: true });
 
-    console.log("Customer created successfully");
+    //console.log("Customer created successfully");
     setSuccessMessage("Customer created successfully!");
 
     setTimeout(() => {

@@ -38,7 +38,7 @@ const SentSMSPage = () => {
         `${BASEURL}/sms-history?page=${page + 1}&limit=${pageSize}`,
         { withCredentials: true }
       );
-      console.log("API Response:", JSON.stringify(response.data, null, 2));
+      //console.log("API Response:", JSON.stringify(response.data, null, 2));
       const { data, totalRecords } = response.data;
       setSmsMessages(data || []);
       setTotalRows(totalRecords || 0);

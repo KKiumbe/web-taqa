@@ -33,12 +33,14 @@ const CustomerDetails = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const [invoices, setInvoices] = useState([]);
   const [receipts, setReceipts] = useState([]);
+  const [garbageCollections, setGarbageCollections] = useState([]);
+  const [trashbagsHistory, setTrashbagsHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [smsMessage, setSmsMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); // New state for delete confirmation dialog
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = getTheme();
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -57,6 +59,10 @@ const CustomerDetails = () => {
         setCustomer(res.data);
         setInvoices(res.data.invoices);
         setReceipts(res.data.receipts);
+        setGarbageCollections(res.data.GarbageCollection || []); // Set garbage collection history
+        setTrashbagsHistory(res.data.trashbagsHistory || []); // Set trash bag issuance history
+
+        //console.log("Customer Details:", );
       } catch (error) {
         console.error("Error fetching customer details:", error);
         setError("Failed to load customer details.");
@@ -98,19 +104,17 @@ const CustomerDetails = () => {
     }
   };
 
-  // Function to open the delete confirmation dialog
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
   };
 
-  // Function to handle customer deletion
   const deleteCustomer = async () => {
     setSending(true);
     try {
       await axios.delete(`${BASEURL}/customers/${id}`, { withCredentials: true });
-      setOpenDeleteDialog(false); // Close dialog on success
-      alert("Customer deleted successfully."); // Optional: Replace with a Snackbar if preferred
-      navigate(-1); // Navigate back after successful deletion
+      setOpenDeleteDialog(false);
+      alert("Customer deleted successfully.");
+      navigate(-1);
     } catch (error) {
       console.error("Error deleting customer:", error);
       setError("Failed to delete customer.");
@@ -120,11 +124,95 @@ const CustomerDetails = () => {
   };
 
   const handleBack = () => {
-    navigate(-1); // Go back to the previous page
+    navigate(-1);
   };
 
+  // Columns for Garbage Collection History DataGrid
+  const garbageCollectionColumns = [
+    { field: "id", headerName: "ID", width: 250 },
+    {
+      field: "collectionDate",
+      headerName: "Collection Date",
+      width: 200,
+      renderCell: (params) =>
+        new Date(params.value).toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    },
+    { field: "notes", headerName: "Notes", width: 200 },
+    {
+      field: "collector",
+      headerName: "Collected By",
+      width: 120,
+      renderCell: (params) => {
+        const { firstName, lastName } = params.row.collector || {};
+        return `${firstName || ''} ${lastName || ''}`.trim();
+      },
+    },
+    {
+      field: "createdAt",
+      headerName: "Recorded At",
+      width: 200,
+      renderCell: (params) =>
+        new Date(params.value).toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    },
+  ];
+
+  // Columns for Trash Bag Issuance History DataGrid
+  const trashBagIssuanceColumns = [
+    { field: "id", headerName: "ID", width: 250 },
+    {
+      field: "issuedDate",
+      headerName: "Issued Date",
+      width: 200,
+      renderCell: (params) =>
+        new Date(params.value).toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    },
+
+    {
+      field: 'issuedBy',
+      headerName: 'Issued By',
+      width: 120,
+      renderCell: (params) => {
+        const { firstName, lastName } = params.row.issuedBy?.assignee || {};
+        return `${firstName || ''} ${lastName || ''}`.trim();
+      },
+    },
+    { field: "bagsIssued", headerName: "Bags Issued", width: 120 },
+    { field: "taskId", headerName: "Task ID", width: 120 },
+    {
+      field: "createdAt",
+      headerName: "Recorded At",
+      width: 200,
+      renderCell: (params) =>
+        new Date(params.value).toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    },
+  ];
+
   return (
-    <Container sx={{  transition: "margin 0.3s ease-in-out" }}>
+    <Container sx={{ transition: "margin 0.3s ease-in-out" }}>
       <Typography variant="h3">
         <TitleComponent title="Customer Details" />
       </Typography>
@@ -194,7 +282,6 @@ const CustomerDetails = () => {
               </Box>
             </Box>
 
-            {/* Delete Confirmation Dialog */}
             <Dialog
               open={openDeleteDialog}
               onClose={() => setOpenDeleteDialog(false)}
@@ -249,8 +336,11 @@ const CustomerDetails = () => {
             >
               <Tab label="Invoices" />
               <Tab label="Payments" />
+              <Tab label="Garbage Collection History" />
+              <Tab label="Trash Bag Issuance History" />
             </Tabs>
 
+            {/* Invoices Tab */}
             <Box hidden={tabIndex !== 0} ml={6}>
               <Typography variant="h6" marginLeft={12}>
                 Invoices
@@ -290,22 +380,17 @@ const CustomerDetails = () => {
                     field: "createdAt",
                     headerName: "Date",
                     width: 180,
-                    renderCell: (params) => {
-                      if (!params?.value) return "N/A";
-                      try {
-                        return new Date(params.value).toLocaleString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        });
-                      } catch (error) {
-                        console.error("Invalid Date:", params.value);
-                        return "Invalid Date";
-                      }
-                    },
+                    renderCell: (params) =>
+                      params.value
+                        ? new Date(params.value).toLocaleString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })
+                        : "N/A",
                   },
                 ]}
                 pageSize={5}
@@ -313,6 +398,7 @@ const CustomerDetails = () => {
               />
             </Box>
 
+            {/* Payments Tab */}
             <Box hidden={tabIndex !== 1} ml={6}>
               <Typography variant="h6" marginLeft={10}>
                 Receipts
@@ -325,7 +411,7 @@ const CustomerDetails = () => {
                     headerName: "View",
                     width: 100,
                     renderCell: (params) => (
-                      <IconButton component={Link} to={`/get-invoice/${params.row.id}`}>
+                      <IconButton component={Link} to={`/receipts/${params.row.id}`}>
                         <VisibilityIcon color={theme.palette.greenAccent.main} />
                       </IconButton>
                     ),
@@ -338,22 +424,17 @@ const CustomerDetails = () => {
                     field: "createdAt",
                     headerName: "Date",
                     width: 180,
-                    renderCell: (params) => {
-                      if (!params?.value) return "N/A";
-                      try {
-                        return new Date(params.value).toLocaleString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        });
-                      } catch (error) {
-                        console.error("Invalid Date:", params.value);
-                        return "Invalid Date";
-                      }
-                    },
+                    renderCell: (params) =>
+                      params.value
+                        ? new Date(params.value).toLocaleString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })
+                        : "N/A",
                   },
                   {
                     field: "transactionId",
@@ -362,6 +443,32 @@ const CustomerDetails = () => {
                     renderCell: (params) => params.row.payment?.transactionId || "N/A",
                   },
                 ]}
+                pageSize={5}
+                getRowId={(row) => row.id}
+              />
+            </Box>
+
+            {/* Garbage Collection History Tab */}
+            <Box hidden={tabIndex !== 2} ml={6}>
+              <Typography variant="h6" marginLeft={10}>
+                Garbage Collection History
+              </Typography>
+              <DataGrid
+                rows={garbageCollections}
+                columns={garbageCollectionColumns}
+                pageSize={5}
+                getRowId={(row) => row.id}
+              />
+            </Box>
+
+            {/* Trash Bag Issuance History Tab */}
+            <Box hidden={tabIndex !== 3} ml={6}>
+              <Typography variant="h6" marginLeft={10}>
+                Trash Bag Issuance History
+              </Typography>
+              <DataGrid
+                rows={trashbagsHistory}
+                columns={trashBagIssuanceColumns}
                 pageSize={5}
                 getRowId={(row) => row.id}
               />

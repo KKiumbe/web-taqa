@@ -40,14 +40,14 @@ const CreateInvoice = () => {
   const [loading, setLoading] = useState(false);
   const [isPhoneSearch, setIsPhoneSearch] = useState(false);
   const [openGenerateDialog, setOpenGenerateDialog] = useState(false);
-
+  
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
   // Debug theme
   useEffect(() => {
-    console.log("Theme Mode:", theme.palette.mode);
-    console.log("background.default:", theme.palette.background.default);
-    console.log("background.paper:", theme.palette.background.paper);
+    //console.log("Theme Mode:", theme.palette.mode);
+    //console.log("background.default:", theme.palette.background.default);
+    //console.log("background.paper:", theme.palette.background.paper);
   }, [theme, darkMode]);
 
   // Redirect to login if not authenticated

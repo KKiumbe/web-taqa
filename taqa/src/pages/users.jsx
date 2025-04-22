@@ -32,7 +32,7 @@ const UserManagementScreen = () => {
           withCredentials: true,
         });
 
-        console.log(`user ${JSON.stringify(response.data)}`);
+        //console.log(`user ${JSON.stringify(response.data)}`);
         setUsers(response.data.users);
       } catch (err) {
         setError("Failed to fetch users");

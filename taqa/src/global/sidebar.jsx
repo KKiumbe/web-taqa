@@ -22,13 +22,12 @@ import {
   Chat,
   Send,
   MonetizationOn,
-  Assignment,ReceiptLong
- 
+  Assignment,
+  ReceiptLong,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import BusinessIcon from "@mui/icons-material/Business";
-
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -40,6 +39,7 @@ const Sidebar = () => {
     communication: false,
     settings: false,
     reports: false,
+    tasks: false,
   });
 
   // Toggle sidebar
@@ -194,6 +194,31 @@ const Sidebar = () => {
           </List>
         </Collapse>
 
+        {/* Tasks Menu */}
+        <ListItem button onClick={() => toggleSubmenu("tasks")} sx={{ py: 1 }}>
+          <ListItemIcon sx={{ minWidth: 40 }}>
+            <Assignment sx={{ fontSize: 24 }} />
+          </ListItemIcon>
+          {open && <ListItemText primary="Tasks" sx={{ fontSize: "0.9rem" }} />}
+          {open && (submenuOpen.tasks ? <ExpandLess /> : <ExpandMore />)}
+        </ListItem>
+        <Collapse in={submenuOpen.tasks} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItem button sx={{ pl: 3, py: 0.5 }} onClick={() => navigate("/tasks")}>
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                <Assignment sx={{ fontSize: 20 }} />
+              </ListItemIcon>
+              {open && <ListItemText primary="View" sx={{ fontSize: "0.8rem" }} />}
+            </ListItem>
+            <ListItem button sx={{ pl: 3, py: 0.5 }} onClickK onClick={() => navigate("/tasks/create")}>
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                <Add sx={{ fontSize: 20 }} />
+              </ListItemIcon>
+              {open && <ListItemText primary="Create" sx={{ fontSize: "0.8rem" }} />}
+            </ListItem>
+          </List>
+        </Collapse>
+
         {/* Reports */}
         <ListItem button onClick={() => toggleSubmenu("reports")} sx={{ py: 1 }}>
           <ListItemIcon sx={{ minWidth: 40 }}>
@@ -235,13 +260,12 @@ const Sidebar = () => {
               </ListItemIcon>
               {open && <ListItemText primary="Users" sx={{ fontSize: "0.8rem" }} />}
             </ListItem>
-
             <ListItem button sx={{ pl: 3, py: 0.5 }} onClick={() => navigate("/org-details")}>
-  <ListItemIcon sx={{ minWidth: 30 }}>
-    <BusinessIcon sx={{ fontSize: 20 }} />
-  </ListItemIcon>
-  {open && <ListItemText primary="Org details" sx={{ fontSize: "0.8rem" }} />}
-</ListItem>
+              <ListItemIcon sx={{ minWidth: 30 }}>
+                <BusinessIcon sx={{ fontSize: 20 }} />
+              </ListItemIcon>
+              {open && <ListItemText primary="Org details" sx={{ fontSize: "0.8rem" }} />}
+            </ListItem>
           </List>
         </Collapse>
       </List>
