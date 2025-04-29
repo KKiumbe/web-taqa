@@ -165,7 +165,7 @@ const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
   return (
     <Container sx={{ maxWidth: 900, minWidth: 600 }}>
-      <Paper elevation={3} sx={{ p: 4, mt: 4, ml: 50, minWidth: 800 }}>
+      <Paper elevation={3} sx={{ p: 4, mt: 4, minWidth: 800 }}>
         <Typography variant="h4" gutterBottom>
         <TitleComponent title={`Edit ${customerData?.firstName}'s Details `} />
 

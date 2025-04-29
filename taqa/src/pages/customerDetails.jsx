@@ -27,6 +27,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useAuthStore } from "../store/authStore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
+import EditIcon from "@mui/icons-material/Edit";
 const CustomerDetails = () => {
   const { id } = useParams();
   const [customer, setCustomer] = useState(null);
@@ -35,7 +36,9 @@ const CustomerDetails = () => {
   const [receipts, setReceipts] = useState([]);
   const [garbageCollections, setGarbageCollections] = useState([]);
   const [trashbagsHistory, setTrashbagsHistory] = useState([]);
+  const [activities, setActivities] = useState([]); // New state for activities
   const [loading, setLoading] = useState(true);
+  const [activityLoading, setActivityLoading] = useState(false); // Separate loading for activities
   const [openModal, setOpenModal] = useState(false);
   const [smsMessage, setSmsMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -57,12 +60,10 @@ const CustomerDetails = () => {
       try {
         const res = await axios.get(`${BASEURL}/customer-details/${id}`, { withCredentials: true });
         setCustomer(res.data);
-        setInvoices(res.data.invoices);
-        setReceipts(res.data.receipts);
-        setGarbageCollections(res.data.GarbageCollection || []); // Set garbage collection history
-        setTrashbagsHistory(res.data.trashbagsHistory || []); // Set trash bag issuance history
-
-        //console.log("Customer Details:", );
+        setInvoices(res.data.invoices || []);
+        setReceipts(res.data.receipts || []);
+        setGarbageCollections(res.data.GarbageCollection || []);
+        setTrashbagsHistory(res.data.trashbagsHistory || []);
       } catch (error) {
         console.error("Error fetching customer details:", error);
         setError("Failed to load customer details.");
@@ -70,7 +71,24 @@ const CustomerDetails = () => {
         setLoading(false);
       }
     };
+
+    const fetchCustomerActivity = async () => {
+      setActivityLoading(true);
+      try {
+        const res = await axios.get(`${BASEURL}/customer-activity/${id}?limit=100`, {
+          withCredentials: true,
+        });
+        setActivities(res.data.activities || []);
+      } catch (error) {
+        console.error("Error fetching customer activity:", error);
+        setError("Failed to load customer activity.");
+      } finally {
+        setActivityLoading(false);
+      }
+    };
+
     fetchCustomerDetails();
+    fetchCustomerActivity();
   }, [id]);
 
   const handleTabChange = (event, newValue) => {
@@ -86,8 +104,10 @@ const CustomerDetails = () => {
         { withCredentials: true }
       );
       setOpenModal(false);
+      setSmsMessage("");
     } catch (error) {
       console.error("Error sending SMS:", error);
+      setError("Failed to send SMS.");
     } finally {
       setSending(false);
     }
@@ -99,6 +119,7 @@ const CustomerDetails = () => {
       await axios.post(`${BASEURL}/send-bill`, { customerId: customer.id }, { withCredentials: true });
     } catch (error) {
       console.error("Error sending bill:", error);
+      setError("Failed to send bill.");
     } finally {
       setSending(false);
     }
@@ -150,7 +171,7 @@ const CustomerDetails = () => {
       width: 120,
       renderCell: (params) => {
         const { firstName, lastName } = params.row.collector || {};
-        return `${firstName || ''} ${lastName || ''}`.trim();
+        return `${firstName || ""} ${lastName || ""}`.trim();
       },
     },
     {
@@ -184,14 +205,13 @@ const CustomerDetails = () => {
           minute: "2-digit",
         }),
     },
-
     {
-      field: 'issuedBy',
-      headerName: 'Issued By',
+      field: "issuedBy",
+      headerName: "Issued By",
       width: 120,
       renderCell: (params) => {
         const { firstName, lastName } = params.row.issuedBy?.assignee || {};
-        return `${firstName || ''} ${lastName || ''}`.trim();
+        return `${firstName || ""} ${lastName || ""}`.trim();
       },
     },
     { field: "bagsIssued", headerName: "Bags Issued", width: 120 },
@@ -211,6 +231,51 @@ const CustomerDetails = () => {
     },
   ];
 
+  // Columns for Activity History DataGrid
+  const activityColumns = [
+    { field: "id", headerName: "ID", width: 100 },
+    { field: "action", headerName: "Action", width: 200 },
+    {
+      field: "details",
+      headerName: "Details",
+      width: 400,
+      renderCell: (params) => {
+        const { details } = params.row;
+        if (details.changedFields) {
+          return (
+            <ul style={{ margin: 0, padding: "0 16px" }}>
+              {details.changedFields.map((change, index) => (
+                <li key={index}>
+                  {change.field}: {change.oldValue || "N/A"} → {change.newValue || "N/A"}
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        return details.message || "No details available";
+      },
+    },
+    {
+      field: "timestamp",
+      headerName: "Date",
+      width: 200,
+      renderCell: (params) =>
+        new Date(params.value).toLocaleString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+    },
+    {
+      field: "user",
+      headerName: "Performed By",
+      width: 200,
+      renderCell: (params) => params.row.user.name || params.row.user.email || "Unknown",
+    },
+  ];
+
   return (
     <Container sx={{ transition: "margin 0.3s ease-in-out" }}>
       <Typography variant="h3">
@@ -222,11 +287,13 @@ const CustomerDetails = () => {
           <CircularProgress color="primary" size={50} />
         </Box>
       ) : error ? (
-        <Typography color="error">{error}</Typography>
+        <Typography color="error">{ 
+
+error}</Typography>
       ) : (
         customer && (
           <>
-            <Box sx={{ p: 3, bgcolor: "background.paper", borderRadius: 2, boxShadow: 1, ml: 5 }}>
+            <Box sx={{ p: 3, borderRadius: 2, boxShadow: 1, ml: 5 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ position: "relative", mb: 2 }}>
@@ -279,6 +346,18 @@ const CustomerDetails = () => {
                 <Button variant="contained" color="error" onClick={handleDeleteClick} disabled={sending}>
                   {sending ? "Deleting..." : "Delete Customer"}
                 </Button>
+
+                <IconButton
+  component={Link}
+  to={`/customer-edit/${id}`}
+  color="primary"
+  disabled={sending}
+  aria-label="Edit Customer"
+  sx={{ color: theme.palette.greenAccent.main }}
+
+>
+  <EditIcon />
+</IconButton>
               </Box>
             </Box>
 
@@ -336,8 +415,9 @@ const CustomerDetails = () => {
             >
               <Tab label="Invoices" />
               <Tab label="Payments" />
-              <Tab label="Garbage Collection History" />
-              <Tab label="Trash Bag Issuance History" />
+              <Tab label="Garbage Collection" />
+              <Tab label="Trash Bags History" />
+              <Tab label="Activity History" />
             </Tabs>
 
             {/* Invoices Tab */}
@@ -472,6 +552,27 @@ const CustomerDetails = () => {
                 pageSize={5}
                 getRowId={(row) => row.id}
               />
+            </Box>
+
+            {/* Activity History Tab */}
+            <Box hidden={tabIndex !== 4} ml={6}>
+              <Typography variant="h6" marginLeft={10}>
+                Activity History
+              </Typography>
+              {activityLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                  <CircularProgress color="primary" size={40} />
+                </Box>
+              ) : activities.length === 0 ? (
+                <Typography>No activity history available.</Typography>
+              ) : (
+                <DataGrid
+                  rows={activities}
+                  columns={activityColumns}
+                  pageSize={5}
+                  getRowId={(row) => row.id}
+                />
+              )}
             </Box>
           </>
         )
