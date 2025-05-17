@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -73,7 +73,7 @@ const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
         setCustomerData(normalizedData);
         setOriginalData(normalizedData);
         setLoading(false);
-      } catch (error) {
+      } catch {
         setSnackbar({
           open: true,
           message: 'Error fetching customer data',

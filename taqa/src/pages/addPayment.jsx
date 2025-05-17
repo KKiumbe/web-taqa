@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -95,7 +95,7 @@ const CreatePayment = () => {
   // Debounced phone search
   const debouncedPhoneSearch = useCallback(
     debounce((query) => handleSearch(query), 500),
-    []
+    [handleSearch]
   );
 
   // Handle input change
@@ -127,38 +127,67 @@ const CreatePayment = () => {
   };
 
   // Submit payment
+
+
   const handlePaymentSubmit = async () => {
-    const { totalAmount, modeOfPayment } = formData;
-    if (!selectedCustomer || !totalAmount || !modeOfPayment) {
-      setSnackbar({ open: true, message: "Please fill all payment details", severity: "error" });
-      return;
-    }
+  const { totalAmount, modeOfPayment } = formData;
+  if (!selectedCustomer || !totalAmount || !modeOfPayment) {
+    setSnackbar({
+      open: true,
+      message: "Please fill all payment details",
+      severity: "error"
+    });
+    return;
+  }
 
-    const payload = {
-      customerId: selectedCustomer.id,
-      totalAmount: parseFloat(totalAmount),
-      modeOfPayment,
-      paidBy: selectedCustomer.firstName,
-    };
+  const payload = {
+    customerId: selectedCustomer.id,
+    totalAmount: parseFloat(totalAmount),
+    modeOfPayment,
+    paidBy: selectedCustomer.firstName,
+  };
 
-    setIsProcessing(true);
-    try {
-      const response = await axios.post(`${BASEURL}/manual-cash-payment`, payload, { withCredentials: true });
-      setSnackbar({ open: true, message: "Payment created successfully", severity: "success" });
-      setSelectedCustomer(null);
-      setFormData({ totalAmount: "", modeOfPayment: "" });
-      setTimeout(() => navigate("/payments"), 2000);
-    } catch (error) {
-      console.error("Payment error:", error);
+  setIsProcessing(true);
+  try {
+    await axios.post(
+      `${BASEURL}/manual-cash-payment`,
+      payload,
+      { withCredentials: true }
+    );
+    setSnackbar({
+      open: true,
+      message: "Payment created successfully",
+      severity: "success"
+    });
+    setSelectedCustomer(null);
+    setFormData({ totalAmount: "", modeOfPayment: "" });
+    setTimeout(() => navigate("/payments"), 2000);
+
+  } catch (err) {
+    console.error("Payment error:", err);
+
+    if (err.response?.status === 402) {
+      // Show your custom “feature disabled” message as a warning
       setSnackbar({
         open: true,
-        message: "Error creating payment: " + (error.response?.data?.message || error.message),
-        severity: "error",
+        message: err.response.data?.error ||
+                 "This feature is disabled due to non-payment of the service.",
+        severity: "warning"
       });
-    } finally {
-      setIsProcessing(false);
+    } else {
+      // Fallback for all other errors
+      setSnackbar({
+        open: true,
+        message: "Error creating payment: " +
+                 (err.response?.data?.message || err.message),
+        severity: "error"
+      });
     }
-  };
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
 
   // Render phone search results
   const renderPhoneSearchResults = () => (

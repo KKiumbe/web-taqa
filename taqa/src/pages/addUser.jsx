@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Box,
   TextField,
@@ -9,6 +9,8 @@ import {
   Card,
   CardContent,
   Grid,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { styled, useTheme } from "@mui/material/styles";
 import axios from "axios";
@@ -47,30 +49,61 @@ const AddUser = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [snackbar, setSnackbar] = useState({
+  open: false,
+  message: "",
+  severity: "info", // 'success' | 'warning' | 'error'
+});
+
 
   const handleChange = (e) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      await axios.post(
-        `${BASEURL}/adduser`,
-        { tenantId, ...userData },
-        { withCredentials: true }
-      );
-      alert("User added successfully!");
-      navigate("/users"); // Redirect to user list
-    } catch (err) {
-      setError("Failed to add user. Please try again.");
-    } finally {
-      setLoading(false);
+  try {
+    await axios.post(
+      `${BASEURL}/adduser`,
+      { tenantId, ...userData },
+      { withCredentials: true }
+    );
+    // Success snackbar instead of alert
+    setSnackbar({
+      open: true,
+      message: "User added successfully!",
+      severity: "success",
+    });
+    setTimeout(() => navigate("/users"), 1500);
+
+  } catch (err) {
+    // Handle Payment Required (402) specially
+    if (err.response?.status === 402) {
+      setSnackbar({
+        open: true,
+        message:
+          err.response.data?.error ||
+          "This feature is disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+    } else {
+      // Generic failure
+      setSnackbar({
+        open: true,
+        message:
+          err.response?.data?.message ||
+          "Failed to add user. Please try again.",
+        severity: "error",
+      });
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <Box
@@ -195,6 +228,22 @@ const AddUser = () => {
           </form>
         </CardContent>
       </StyledCard>
+
+<Snackbar
+  open={snackbar.open}
+  autoHideDuration={6000}
+  onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+  anchorOrigin={{ vertical: "top", horizontal: "center" }}
+>
+  <Alert
+    onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+    severity={snackbar.severity}
+    sx={{ width: '100%' }}
+  >
+    {snackbar.message}
+  </Alert>
+</Snackbar>
+
     </Box>
   );
 };

@@ -24,6 +24,8 @@ import { useAuthStore } from "../store/authStore";
 import { useThemeStore } from "../store/authStore";
 import debounce from "lodash/debounce";
 
+
+
 const CreateInvoice = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -32,10 +34,21 @@ const CreateInvoice = () => {
 
   // State management
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  type Customer = {
+    id: number | string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    category?: string;
+    monthlyCharge?: number;
+    closingBalance?: number;
+    // add other fields as needed
+  };
+  const [searchResults, setSearchResults] = useState<Customer[]>([]);
+
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState({ description: "", amount: "", quantity: "" });
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "info" | "warning" | "error" }>({ open: false, message: "", severity: "success" });
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPhoneSearch, setIsPhoneSearch] = useState(false);
@@ -146,30 +159,86 @@ const CreateInvoice = () => {
   };
 
   // Create invoice for a single customer
-  const handleCreateInvoice = async () => {
-    const { description, amount, quantity } = formData;
-    if (!description || !amount || !quantity || !selectedCustomer) {
-      setSnackbar({ open: true, message: "Please fill in all fields and select a customer", severity: "error" });
-      return;
-    }
 
-    const invoiceData = {
-      customerId: selectedCustomer.id,
-      invoiceItemsData: [{ description, amount: parseFloat(amount), quantity: parseInt(quantity) }],
-    };
+const handleCreateInvoice = async () => {
+  const { description, amount, quantity } = formData;
 
-    setLoading(true);
-    try {
-      const response = await axios.post(`${BASEURL}/invoices/`, invoiceData, { withCredentials: true });
-      setSnackbar({ open: true, message: "Invoice created successfully!", severity: "success" });
-      navigate(`/get-invoice/${response.data.newInvoice.id}`);
-    } catch (error) {
-      console.error("Error creating invoice:", error);
-      setSnackbar({ open: true, message: "Failed to create invoice. Please try again.", severity: "error" });
-    } finally {
-      setLoading(false);
-    }
+  // 1. Validation
+  if (!description || !amount || !quantity || !selectedCustomer) {
+    setSnackbar({
+      open: true,
+      message: "Please fill in all fields and select a customer",
+      severity: "error",
+    });
+    return;
+  }
+
+  const invoiceData = {
+    customerId: (selectedCustomer as Customer).id,
+    invoiceItemsData: [
+      { description, amount: parseFloat(amount), quantity: parseInt(quantity, 10) },
+    ],
   };
+
+  setLoading(true);
+
+  try {
+    // 2. API call
+    const { data } = await axios.post(
+      `${BASEURL}/invoices`,
+      invoiceData,
+      { withCredentials: true }
+    );
+
+    // 3. Success
+    setSnackbar({
+      open: true,
+      message: "Invoice created successfully!",
+      severity: "success",
+    });
+    navigate(`/get-invoice/${data.newInvoice.id}`);
+
+  } catch (err) {
+    console.error("Error creating invoice:", err);
+
+    // 4a. Subscription lapsed: show 402 message as a warning
+    if (err.response?.status === 402) {
+      setSnackbar({
+        open: true,
+        message:
+          err.response.data?.error ||
+          "This feature is disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+
+    // 4b. Bad request: likely validation
+    } else if (err.response?.status === 400) {
+      setSnackbar({
+        open: true,
+        message:
+          err.response.data?.message ||
+          "Invalid invoice data. Please review your entries.",
+        severity: "error",
+      });
+
+    // 4c. Other errors
+    } else {
+      setSnackbar({
+        open: true,
+        message:
+          err.response?.data?.message ||
+          "Failed to create invoice. Please try again later.",
+        severity: "error",
+      });
+    }
+
+  } finally {
+    // 5. Always turn loading off
+    setLoading(false);
+  }
+};
+
+
 
   // Open the generate invoices dialog
   const handleGenerateAllClick = () => {
@@ -281,7 +350,7 @@ const CreateInvoice = () => {
             label="Search Customer by Phone"
             variant="outlined"
             value={searchQuery}
-            onChange={handleInputChange}
+            onChange={(e) => handleInputChange(e, e.target.value)}
             fullWidth
             disabled={isSearching}
             inputProps={{ maxLength: 15 }}

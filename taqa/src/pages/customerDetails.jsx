@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Container,
@@ -28,6 +28,9 @@ import { useAuthStore } from "../store/authStore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import EditIcon from "@mui/icons-material/Edit";
+import Snackbar from "@mui/material/Snackbar";
+import MuiAlert from "@mui/material/Alert";
+
 const CustomerDetails = () => {
   const { id } = useParams();
   const [customer, setCustomer] = useState(null);
@@ -40,10 +43,15 @@ const CustomerDetails = () => {
   const [loading, setLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(false); // Separate loading for activities
   const [openModal, setOpenModal] = useState(false);
-  const [smsMessage, setSmsMessage] = useState("");
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+  const [error, setError] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [smsMessage, setSmsMessage] = useState("");
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   const theme = getTheme();
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -53,7 +61,7 @@ const CustomerDetails = () => {
     if (!currentUser) {
       navigate("/login");
     }
-  }, [currentUser]);
+  }, [currentUser, navigate]);
 
   useEffect(() => {
     const fetchCustomerDetails = async () => {
@@ -89,41 +97,96 @@ const CustomerDetails = () => {
 
     fetchCustomerDetails();
     fetchCustomerActivity();
-  }, [id]);
+  }, [id, BASEURL]);
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
   };
 
-  const sendSMS = async () => {
-    setSending(true);
-    try {
-      await axios.post(
-        `${BASEURL}/send-sms`,
-        { mobile: customer.phoneNumber, message: smsMessage },
-        { withCredentials: true }
-      );
-      setOpenModal(false);
-      setSmsMessage("");
-    } catch (error) {
-      console.error("Error sending SMS:", error);
-      setError("Failed to send SMS.");
-    } finally {
-      setSending(false);
-    }
-  };
+const sendSMS = async () => {
+  setSending(true);
+  try {
+    await axios.post(
+      `${BASEURL}/send-sms`,
+      { mobile: customer.phoneNumber, message: smsMessage },
+      { withCredentials: true }
+    );
+    setOpenModal(false);
+    setSmsMessage("");
+    setSnackbar({
+      open: true,
+      message: "SMS sent successfully!",
+      severity: "success",
+    });
+  } catch (err) {
+    console.error("Error sending SMS:", err);
 
-  const sendBill = async () => {
-    setSending(true);
-    try {
-      await axios.post(`${BASEURL}/send-bill`, { customerId: customer.id }, { withCredentials: true });
-    } catch (error) {
-      console.error("Error sending bill:", error);
-      setError("Failed to send bill.");
-    } finally {
-      setSending(false);
+    if (err.response?.status === 402) {
+      // Subscription lapsed / feature disabled
+      setSnackbar({
+        open: true,
+        message:
+          err.response.data?.error ||
+          "This feature is disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+      setOpenModal(false);
+    } else {
+      // All other errors
+      setSnackbar({
+        open: true,
+        message:
+          err.response?.data?.message ||
+          "Failed to send SMS. Please try again.",
+        severity: "error",
+      });
     }
-  };
+  } finally {
+    setSending(false);
+  }
+};
+
+const sendBill = async () => {
+  setSending(true);
+  try {
+    await axios.post(
+      `${BASEURL}/send-bill`,
+      { customerId: customer.id },
+      { withCredentials: true }
+    );
+    // Optionally show success toast:
+    setSnackbar({
+      open: true,
+      message: "Bill sent successfully!",
+      severity: "success",
+    });
+  } catch (err) {
+    console.error("Error sending bill:", err);
+
+    if (err.response?.status === 402) {
+      // Subscription lapsed / feature disabled
+      setSnackbar({
+        open: true,
+        message:
+          err.response.data?.error ||
+          "This feature is disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+    } else {
+      // All other errors
+      setSnackbar({
+        open: true,
+        message:
+          err.response?.data?.message ||
+          "Failed to send bill. Please try again.",
+        severity: "error",
+      });
+    }
+  } finally {
+    setSending(false);
+  }
+};
+
 
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
@@ -290,7 +353,7 @@ const CustomerDetails = () => {
         <Typography color="error">{ 
 
 error}</Typography>
-      ) : (
+      ) : 
         customer && (
           <>
             <Box sx={{ p: 3, borderRadius: 2, boxShadow: 1, ml: 5 }}>
@@ -569,14 +632,30 @@ error}</Typography>
                 <DataGrid
                   rows={activities}
                   columns={activityColumns}
-                  pageSize={5}
-                  getRowId={(row) => row.id}
                 />
               )}
             </Box>
+
+            {/* Snackbar for notifications */}
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={4000}
+              onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <MuiAlert
+                elevation={6}
+                variant="filled"
+                onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+                severity={snackbar.severity}
+                sx={{ width: "100%" }}
+              >
+                {snackbar.message}
+              </MuiAlert>
+            </Snackbar>
           </>
         )
-      )}
+      }
     </Container>
   );
 };

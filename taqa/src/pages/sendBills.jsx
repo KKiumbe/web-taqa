@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import axios from 'axios';
 import { 
   Box, 
@@ -47,6 +47,14 @@ function SendBillsScreen() {
   const [phoneNumber, setPhoneNumber] = useState(''); // For phone number display
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+  // Helper for showing snackbar
+  const setSnackbar = ({ open, message, severity }) => {
+    setSnackbarOpen(open);
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity || 'success');
+  };
   // State for send bills per day
   const [day, setDay] = useState(null);
   const theme = getTheme();
@@ -63,14 +71,52 @@ function SendBillsScreen() {
   };
 
   // 1. Send Bills to All
+
+
+
   const handleSendBillsToAll = async () => {
-    try {
-      const response = await axios.post(`${BASEURL}/send-bills`, {}, { withCredentials: true });
-      setMessage(response.data.message);
-    } catch (error) {
-      setMessage(error.response?.data?.error || 'Error sending bills');
+  // Optionally set loading state here:
+  // setLoading(true);
+
+  try {
+    const { data } = await axios.post(
+      `${BASEURL}/send-bills`,
+      {},
+      { withCredentials: true }
+    );
+    // Show success
+    setSnackbar({
+      open: true,
+      message: data.message || 'Bills sent successfully!',
+      severity: 'success',
+    });
+  } catch (err) {
+    // 402: subscription expired / feature disabled
+    if (err.response?.status === 402) {
+      setSnackbar({
+        open: true,
+        message:
+          err.response.data?.error ||
+          'This feature is disabled due to non-payment of the service.',
+        severity: 'warning',
+      });
+    } else {
+      // Other errors
+      setSnackbar({
+        open: true,
+        message:
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          'Error sending bills. Please try again.',
+        severity: 'error',
+      });
     }
-  };
+  } finally {
+    // if you set loading:
+    // setLoading(false);
+  }
+};
+
 
   // 2. Search Customers (by name or phone)
   const handleNameSearch = async (value) => {
@@ -170,19 +216,59 @@ function SendBillsScreen() {
   };
 
   // 3. Send Bills to Group (Per Day)
+
   const handleSendBillsToGroup = async () => {
-    if (!day) {
-      setMessage('Please select a day');
-      return;
+  // 1️⃣ Validate day selection
+  if (!day) {
+    setSnackbar({
+      open: true,
+      message: 'Please select a day',
+      severity: 'error',
+    });
+    return;
+  }
+
+  // 2️⃣ Call the API
+  try {
+    const { data } = await axios.post(
+      `${BASEURL}/send-bill-perday`,
+      { day: day.value },
+      { withCredentials: true }
+    );
+
+    // 3️⃣ Success
+    setSnackbar({
+      open: true,
+      message: data.message || 'Bills sent for the selected day!',
+      severity: 'success',
+    });
+    setDay(null);
+
+  } catch (err) {
+    // 4a️⃣ Subscription lapsed: 402
+    if (err.response?.status === 402) {
+      setSnackbar({
+        open: true,
+        message:
+          err.response.data?.error ||
+          'This feature is disabled due to non-payment of the service.',
+        severity: 'warning',
+      });
+
+    // 4b️⃣ Other errors
+    } else {
+      setSnackbar({
+        open: true,
+        message:
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          'Error sending bills. Please try again.',
+        severity: 'error',
+      });
     }
-    try {
-      const response = await axios.post(`${BASEURL}/send-bill-perday`, { day: day.value });
-      setMessage(response.data.message);
-      setDay(null);
-    } catch (error) {
-      setMessage(error.response?.data?.error || 'Error sending bills');
-    }
-  };
+  }
+};
+
 
   return (
     <Container maxWidth="md" sx={{width: '100%', padding: 3, 
@@ -390,26 +476,24 @@ function SendBillsScreen() {
           {/* Response Message */}
           {message && (
             <Box sx={{ mt: 2 }}>
-              <Typography color={message.includes('Error') ? 'error' : 'success'}>
-                {message}
-              </Typography>
+              <Typography color="primary">{message}</Typography>
             </Box>
           )}
+          {/* Snackbar for search errors */}
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={6000}
+            onClose={() => setSnackbarOpen(false)}
+          >
+            <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity}>
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
         </Box>
       </Paper>
-
-      {/* Snackbar for search errors */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={() => setSnackbarOpen(false)}
-      >
-        <Alert onClose={() => setSnackbarOpen(false)} severity="error">
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }
+    
 
 export default SendBillsScreen;

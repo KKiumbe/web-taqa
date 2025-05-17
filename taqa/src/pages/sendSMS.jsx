@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { 
   Tabs, Tab, Box, TextField, Button, Typography, Autocomplete, 
   MenuItem, Select, InputLabel, FormControl, Container, CircularProgress,
   Snackbar,
   Alert,
-  colors
+ 
 } from '@mui/material';
 import { getTheme } from '../store/theme';
 import axios from 'axios';
@@ -64,51 +64,81 @@ function SmsScreen() {
     }
   };
 
-  const handleSend = async (type) => {
-    if (!message) {
-      setSnackbar({ open: true, message: 'Please enter a message', severity: 'error' });
+const handleSend = async (type) => {
+  if (!message) {
+    setSnackbar({ open: true, message: 'Please enter a message', severity: 'error' });
+    return;
+  }
+
+  let url, body;
+  if (type === 'single' || type === 'new') {
+    if (!phoneNumber) {
+      setSnackbar({ open: true, message: 'Please enter a phone number', severity: 'error' });
       return;
     }
-  
-    let url, body;
-    if (type === 'single' || type === 'new') {
-      if (!phoneNumber) {
-        setSnackbar({ open: true, message: 'Please enter a phone number', severity: 'error' });
-        return;
-      }
-      url = `${BASEURL}/send-sms`;
-      body = { mobile: phoneNumber, message };
-    } else if (type === 'all') {
-      url = `${BASEURL}/send-to-all`;
-      body = { message };
-    } else if (type === 'group') {
-      if (!selectedDay) {
-        setSnackbar({ open: true, message: 'Please select a day', severity: 'error' });
-        return;
-      }
-      url = `${BASEURL}/send-to-group`;
-      body = { day: selectedDay };
+    url = `${BASEURL}/send-sms`;
+    body = { mobile: phoneNumber, message };
+  } else if (type === 'all') {
+    url = `${BASEURL}/send-to-all`;
+    body = { message };
+  } else if (type === 'group') {
+    if (!selectedDay) {
+      setSnackbar({ open: true, message: 'Please select a day', severity: 'error' });
+      return;
     }
-  
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        credentials: 'include',
+    url = `${BASEURL}/send-to-group`;
+    body = { day: selectedDay };
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      credentials: 'include',
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setSnackbar({
+        open: true,
+        message: `${type.charAt(0).toUpperCase() + type.slice(1)} SMS sent successfully!`,
+        severity: 'success',
       });
-  
-      if (response.ok) {
-        setSnackbar({ open: true, message: `${type.charAt(0).toUpperCase() + type.slice(1)} SMS sent successfully!`, severity: 'success' });
-        resetFields();
-      } else {
-        throw new Error('Failed to send SMS');
-      }
-    } catch (error) {
-      console.error('Error sending SMS:', error);
-      setSnackbar({ open: true, message: 'Failed to send SMS. Please try again.', severity: 'error' });
+      resetFields();
+
+    } else if (response.status === 402) {
+      // Subscription expired / non-payment
+      setSnackbar({
+        open: true,
+        message:
+          data.error ||
+          'This feature is disabled due to non-payment of the service.',
+        severity: 'warning',
+      });
+
+    } else {
+      // Other failures
+      setSnackbar({
+        open: true,
+        message:
+          data.error ||
+          data.message ||
+          'Failed to send SMS. Please try again.',
+        severity: 'error',
+      });
     }
-  };
+  } catch (err) {
+    console.error('Error sending SMS:', err);
+    setSnackbar({
+      open: true,
+      message: 'Network error. Please try again.',
+      severity: 'error',
+    });
+  }
+};
+
   
   return (
     <Container

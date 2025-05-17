@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
-  Paper,
-  Divider,
   Grid,
   Card,
   CardContent,
@@ -200,68 +198,75 @@ const PaymentDetails = () => {
     }
   };
 
-  const handleManualReceipt = async () => {
-    if (!selectedCustomer) {
-      setReceiptingError("No customer selected.");
-      setSnackbarMessage("No customer selected.");
-      setSnackbarSeverity("warning");
+const handleManualReceipt = async () => {
+  if (!selectedCustomer) {
+    setSnackbarMessage("No customer selected.");
+    setSnackbarSeverity("warning");
+    setSnackbarOpen(true);
+    return;
+  }
+
+  const receiptPayload = {
+    paymentId: id,
+    customerId: selectedCustomer.id,
+    totalAmount: payment.amount,
+    modeOfPayment: payment.modeOfPayment,
+    paidBy: selectedCustomer.firstName,
+  };
+
+  setReceiptLoading(true);
+  try {
+    const { data } = await axios.post(
+      `${BASEURL}/manual-receipt`,
+      receiptPayload,
+      { withCredentials: true }
+    );
+
+    const receipt = data.receipts[0];
+    if (!receipt?.id) {
+      setSnackbarMessage("No receipt ID returned.");
+      setSnackbarSeverity("error");
       setSnackbarOpen(true);
       return;
     }
 
-    const receiptPayload = {
-      paymentId: id,
-      customerId: selectedCustomer.id,
-      totalAmount: payment.amount,
-      modeOfPayment: payment.modeOfPayment,
-      paidBy: selectedCustomer.firstName,
-    };
-
-    setReceiptLoading(true);
-    try {
-      const response = await axios.post(`${BASEURL}/manual-receipt`, receiptPayload, {
-        withCredentials: true,
-      });
-      const receiptId = response.data.receipts[0]?.id;
-      if (!receiptId) {
-        setReceiptingError("No receipt ID returned.");
-        setSnackbarMessage("No receipt ID returned.");
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-        return;
-      }
-      setPayment((prev) => ({ ...prev, receipted: true, receipt: response.data.receipts[0] }));
-      setModalOpen(false);
-      setSnackbarMessage("Payment receipted successfully!");
-      setSnackbarSeverity("success");
+    setPayment((prev) => ({
+      ...prev,
+      receipted: true,
+      receipt,
+    }));
+    setModalOpen(false);
+    setSnackbarMessage("Payment receipted successfully!");
+    setSnackbarSeverity("success");
+    setSnackbarOpen(true);
+    navigate(`/receipts/${receipt.id}`);
+  } catch (err) {
+    if (err.response?.status === 402) {
+      setSnackbarMessage(
+        err.response.data?.error ||
+        "This feature is disabled due to non-payment of the service."
+      );
+      setSnackbarSeverity("warning");
       setSnackbarOpen(true);
-      navigate(`/receipts/${receiptId}`);
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || "Failed to receipt payment.";
-      if (error.response?.status === 400 && errorMessage === "Payment with this ID has already been receipted.") {
-        setSnackbarMessage("This payment has already been receipted.");
-        setSnackbarSeverity("info");
-        setSnackbarOpen(true);
-        setModalOpen(false); // Close modal since no action can be taken
-      } else {
-        setReceiptingError(errorMessage);
-        setSnackbarMessage(errorMessage);
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
-      }
-      console.error("Error receipting payment:", error);
-    } finally {
-      setReceiptLoading(false);
+      setModalOpen(false);
+    } else if (
+      err.response?.data?.message === "This payment has already been receipted."
+    ) {
+      setSnackbarMessage("This payment has already been receipted.");
+      setSnackbarSeverity("info");
+      setSnackbarOpen(true);
+      setModalOpen(false);
+    } else {
+      setSnackbarMessage(
+        err.response?.data?.message || "Error receipting payment."
+      );
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        <CircularProgress size={60} thickness={4} sx={{ color: theme.palette.greenAccent.main }} />
-      </Box>
-    );
+  } finally {
+    setReceiptLoading(false);
   }
+}
 
   if (error) {
     return (
