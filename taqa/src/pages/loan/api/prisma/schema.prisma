@@ -1,0 +1,160 @@
+// datasource configuration
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// generator for Prisma client
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+// Lender model (Tenant)
+model Lender {
+  id              Int           @id @default(autoincrement())
+  tenantId        String        @unique // Unique tenant identifier for the lender
+  name            String
+  contactEmail    String?       @unique
+  contactPhone    String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  organizations   Organization[]
+  loans           Loan[]
+  repayments      ConsolidatedRepayment[]
+  mpesaConfig     MpesaConfig?
+  smsConfig       SMSConfig?
+}
+
+// Organization model
+model Organization {
+  id                  Int                   @id @default(autoincrement())
+  tenantId            String
+  lender              Lender                @relation(fields: [tenantId], references: [tenantId])
+  name                String
+  approvalSteps       Int                   @default(1) // 1 or 2 approval steps
+  loanLimitMultiplier Float                 @default(1.0) // Multiplier for gross salary to calculate loan limit
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  customers           Customer[]
+  loans               Loan[]
+  repayments          ConsolidatedRepayment[]
+}
+
+// Customer model (Employee)
+model Customer {
+  id              Int           @id @default(autoincrement())
+  tenantId        String
+  organizationId  Int
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  firstName       String
+  lastName        String
+  phoneNumber     String        @unique
+  email           String?       @unique
+  idNumber        String?       @unique
+  grossSalary     Float         @default(0.0) // Gross monthly salary
+  creditScore     Int?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  loans           Loan[]
+}
+
+// Loan model
+model Loan {
+  id                      Int                   @id @default(autoincrement())
+  tenantId                String
+  lender                  Lender                @relation(fields: [tenantId], references: [tenantId])
+  organizationId          Int
+  organization            Organization          @relation(fields: [organizationId], references: [id])
+  customerId              Int
+  customer                Customer              @relation(fields: [customerId], references: [id])
+  amount                  Float
+  interestRate            Float                 @default(0.0)
+  durationDays            Int                   @default(30)
+  status                  LoanStatus            @default(PENDING)
+  approvalLevel           Int                   @default(0)
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  disbursedAt             DateTime?
+  repaymentDueAt          DateTime?
+  mpesaTransaction        MpesaTransaction?
+  consolidatedRepaymentId Int?
+  consolidatedRepayment   ConsolidatedRepayment? @relation(fields: [consolidatedRepaymentId], references: [id])
+}
+
+// Consolidated repayment model
+model ConsolidatedRepayment {
+  id                  Int                   @id @default(autoincrement())
+  tenantId            String
+  lender              Lender                @relation(fields: [tenantId], references: [tenantId])
+  organizationId      Int
+  organization        Organization          @relation(fields: [organizationId], references: [id])
+  totalAmount         Float
+  status              RepaymentStatus       @default(PENDING)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  paidAt              DateTime?
+  loans               Loan[]
+}
+
+// M-Pesa configuration per lender
+model MpesaConfig {
+  id              Int           @id @default(autoincrement())
+  tenantId        String        @unique
+  lender          Lender        @relation(fields: [tenantId], references: [tenantId])
+  shortCode       String
+  consumerKey     String
+  consumerSecret  String
+  passkey         String
+  callbackUrl     String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+// M-Pesa transaction for loan disbursement
+model MpesaTransaction {
+  id              Int           @id @default(autoincrement())
+  loanId          Int           @unique
+  loan            Loan          @relation(fields: [loanId], references: [id])
+  transactionId   String        @unique
+  amount          Float
+  phoneNumber     String
+  status          TransactionStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+// SMS configuration per lender
+model SMSConfig {
+  id                         Int      @id @default(autoincrement())
+  tenantId                   String   @unique
+  lender                     Lender   @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  partnerId                  String
+  apiKey                     String
+  shortCode                  String
+  customerSupportPhoneNumber String
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+// Enums
+enum LoanStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISBURSED
+  REPAID
+  DEFAULTED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum RepaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}

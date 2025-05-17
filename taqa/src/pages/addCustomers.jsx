@@ -98,6 +98,10 @@ const handleSubmit = async (e) => {
       } else if (status === 401) {
         setError("Unauthorized. Redirecting to login...");
         setTimeout(() => navigate("/login"), 2000);
+        
+      } else if (status === 402) {
+          // Use Material UI Alert for 402 errors
+        setError(data?.error || "This feature is disabled due to non payment of the service.");
       } else {
         setError("Something went wrong on our end. Please try again later.");
       }
