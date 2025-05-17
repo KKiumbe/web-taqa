@@ -112,41 +112,56 @@ const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const changedData = getChangedFields();
-      if (Object.keys(changedData).length === 0) {
-        setSnackbar({
-          open: true,
-          message: 'No changes detected',
-          severity: 'info',
-        });
-        setLoading(false);
-        return;
-      }
-      await axios.put(`${BASEURL}/customers/${id}`, changedData, {
-        withCredentials: true,
-      });
-      setLoading(false);
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    setLoading(true);
+    const changedData = getChangedFields();
+    if (Object.keys(changedData).length === 0) {
       setSnackbar({
         open: true,
-        message: 'Customer changes saved successfully!',
-        severity: 'success',
+        message: 'No changes detected',
+        severity: 'info',
       });
-      setTimeout(() => {
-        navigate('/customers');
-      }, 2000);
-    } catch (error) {
       setLoading(false);
+      return;
+    }
+    await axios.put(
+      `${BASEURL}/customers/${id}`,
+      changedData,
+      { withCredentials: true }
+    );
+
+    setLoading(false);
+    setSnackbar({
+      open: true,
+      message: 'Customer changes saved successfully!',
+      severity: 'success',
+    });
+    setTimeout(() => navigate('/customers'), 2000);
+  } catch (err) {
+    setLoading(false);
+
+    // If backend returned a 402, use its custom message
+    if (err.response?.status === 402) {
       setSnackbar({
         open: true,
-        message: 'Error updating customer: ' + error.message,
+        message: err.response.data?.error || 
+                 'Feature disabled due to non-payment of the service.',
+        severity: 'warning',
+      });
+    } else {
+      // Fallback for other errors
+      setSnackbar({
+        open: true,
+        message: 'Error updating customer: ' + (err.response?.data?.message || err.message),
         severity: 'error',
       });
     }
-  };
+  }
+};
+
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
