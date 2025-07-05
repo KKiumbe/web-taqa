@@ -1,45 +1,47 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import { CssBaseline, Box } from "@mui/material";
-import { useAuthStore, useThemeStore } from "./store/authStore";
+
+
 import { getTheme } from "./store/theme";
+import { useAuthStore, useThemeStore } from "./store/authStore";
+import { Box, CssBaseline, ThemeProvider } from "@mui/material";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 
-import HomeScreen from "./pages/home";
-import Login from "./pages/login";
 
-import ProtectedRoute from "./ProtectedRoute";
-import Navbar from "./global/navbar";
-import Sidebar from "./global/sidebar";
-import CustomersScreen from "./pages/customers";
-import InvoiceList from "./pages/Invoices";
-import AddCustomer from "./pages/addCustomers";
-import CreateInvoice from "./pages/createInvoice";
-import InvoiceDetails from "./pages/InvoiceDetail";
-import CustomerDetails from "./pages/customerDetails";
-import Payments from "./pages/payments";
-import PaymentDetails from "./pages/PaymentDetail";
-import CreatePayment from "./pages/addPayment";
-import Receipts from "./pages/receipts";
-import ReceiptDetail from "./pages/receiptDetails";
-import SentSMSPage from "./pages/sentSMS";
-import SmsScreen from "./pages/sendSMS";
-import SendBillsScreen from "./pages/sendBills";
-import DebtManager from "./pages/debtManager";
-import ReportScreen from "./pages/reports";
-import ComingSoonPage from "./pages/comingSoon";
-import CustomerEditScreen from "./pages/editCustomers";
-import ForgotPasswordScreen from "./pages/forgotPassword";
-import ChangePasswordScreen from "./pages/ChangePasswordScreen";
-import VerifyOtpScreen from "./pages/VerifyOtpScreen";
-import UserManagementScreen from "./pages/users";
-import UserDetails from "./pages/userDetails";
-import AddUser from "./pages/addUser";
-import Organization from "./pages/orgDetails";
-import EditOrganization from "./pages/editOrg";
-import AssignTaskScreen from "./pages/createTask";
-import FetchTasksScreen from "./pages/fetchTasks";
-import TaskDetailsScreen from "./pages/taskDetails";
+
+import PaymentDetails from "./pages/payments/PaymentDetail.jsx";
+import CustomersScreen from "./pages/customers/customers.jsx";
+import CustomerDetails from "./pages/customers/CustomerDetails.jsx";
+import Receipts from "./pages/payments/receipts.jsx";
+import ReceiptDetail from "./pages/payments/receiptDetails.jsx";
+import CustomerEditScreen from "./pages/customers/editCustomers.jsx";
+import VerifyOtpScreen from "./pages/auth/VerifyOtpScreen.jsx";
+import HomeScreen from "./pages/home/home.jsx";
+import SmsScreen from "./pages/sms/sendSMS.jsx";
+import SendBillsScreen from "./pages/sms/sendBills.jsx";
+import DebtManager from "./pages/sms/debtManager/debtManager.jsx";
+import Organization from "./pages/organization/orgDetails.jsx";
+import EditOrganization from "./pages/organization/editOrg.jsx";
+import AssignTaskScreen from "./pages/tasks/createTask.jsx";
+import FetchTasksScreen from "./pages/tasks/fetchTasks.jsx";
+import TaskDetailsScreen from "./pages/tasks/taskDetails.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
+import ForgotPasswordScreen from "./pages/auth/forgotPassword.jsx";
+import ChangePasswordScreen from "./pages/auth/ChangePasswordScreen.jsx";
+import CreatePayment from "./pages/payments/addPayment.jsx";
+import SentSMSPage from "./pages/sms/sentSMS.jsx";
+
+import ReportScreen from "./pages/reports/reports.jsx";
+import ComingSoonPage from "./pages/comingSoon.jsx";
+import UserManagementScreen from "./pages/auth/users.jsx";
+import Sidebar from "./global/sidebar.jsx";
+import Navbar from "./global/navbar.jsx";
+import AddUser from "./pages/auth/addUser.jsx";
+import UserDetails from "./pages/auth/userDetails.jsx";
+import InvoiceList from "./pages/invoices/Invoices.jsx";
+import AddCustomer from "./pages/customers/addCustomers.jsx";
+import InvoiceDetails from "./pages/invoices/InvoiceDetail.jsx";
+import Payments from "./pages/payments/Payments.jsx";
+import CreateInvoice from './pages/invoices/CreateInvoice.jsx'
+import Login from "./pages/auth/Login.jsx";
 
 const App = () => {
   const { darkMode } = useThemeStore();
@@ -81,7 +83,7 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/reset-password" element={<ForgotPasswordScreen />} />
                 <Route path="/change-password" element={<ChangePasswordScreen />} />
-                <Route path="/verify-otp" element={<VerifyOtpScreen />} />
+                <Route path="/verify-otp" element={<VerifyOtpScreen/>} />
                 <Route
                   path="/"
                   element={
@@ -118,7 +120,7 @@ const App = () => {
                   path="/create-invoice"
                   element={
                     <ProtectedRoute>
-                      <CreateInvoice />
+                      < CreateInvoice/>
                     </ProtectedRoute>
                   }
                 />
