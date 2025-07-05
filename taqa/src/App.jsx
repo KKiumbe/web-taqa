@@ -24,20 +24,20 @@ import AssignTaskScreen from "./pages/tasks/createTask.jsx";
 import FetchTasksScreen from "./pages/tasks/fetchTasks.jsx";
 import TaskDetailsScreen from "./pages/tasks/taskDetails.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
-import ForgotPasswordScreen from "./pages/auth/forgotPassword.jsx";
+import ForgotPasswordScreen from "./pages/auth/ForgotPassword.jsx";
 import ChangePasswordScreen from "./pages/auth/ChangePasswordScreen.jsx";
 import CreatePayment from "./pages/payments/addPayment.jsx";
 import SentSMSPage from "./pages/sms/sentSMS.jsx";
 
 import ReportScreen from "./pages/reports/reports.jsx";
 import ComingSoonPage from "./pages/comingSoon.jsx";
-import UserManagementScreen from "./pages/auth/users.jsx";
+import UserManagementScreen from "./pages/auth/Users.jsx";
 import Sidebar from "./global/sidebar.jsx";
 import Navbar from "./global/navbar.jsx";
-import AddUser from "./pages/auth/addUser.jsx";
-import UserDetails from "./pages/auth/userDetails.jsx";
+import AddUser from "./pages/auth/AddUser.jsx";
+import UserDetails from "./pages/auth/UserDetails.jsx";
 import InvoiceList from "./pages/invoices/Invoices.jsx";
-import AddCustomer from "./pages/customers/addCustomers.jsx";
+import AddCustomer from "./pages/customers/AddCustomers.jsx";
 import InvoiceDetails from "./pages/invoices/InvoiceDetail.jsx";
 import Payments from "./pages/payments/Payments.jsx";
 import CreateInvoice from './pages/invoices/CreateInvoice.jsx'
