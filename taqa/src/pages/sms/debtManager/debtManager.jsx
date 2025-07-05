@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import {
   Box,
@@ -36,7 +36,7 @@ function DebtManager() {
   // 1. Send SMS to All Customers with Arrears
   const handleSendSmsToAll = async () => {
     try {
-      const response = await axios.post(`${BASEURL}/send-sms-unpaid`, { withCredentials: true });
+      const response = await axios.post(`${BASEURL}/send-sms-unpaid`, {},{ withCredentials: true });
       setMessage(response.data.message || "SMS sent to all customers with arrears");
     } catch (error) {
       setMessage(error.response?.data?.error || "Error sending SMS");
@@ -46,7 +46,7 @@ function DebtManager() {
   // 2. Send SMS to Customers with High Balance
   const handleSendSmsHighBalance = async () => {
     try {
-      const response = await axios.post(`${BASEURL}/send-sms-high-balance`, { withCredentials: true });
+      const response = await axios.post(`${BASEURL}/send-sms-high-balance`,{}, { withCredentials: true });
       setMessage(response.data.message || "SMS sent to customers with high balance");
     } catch (error) {
       setMessage(error.response?.data?.error || "Error sending SMS");
@@ -56,7 +56,7 @@ function DebtManager() {
   // 3. Send SMS to Customers with Low Balance
   const handleSendSmsLowBalance = async () => {
     try {
-      const response = await axios.post(`${BASEURL}/send-sms-low-balance`, { withCredentials: true });
+      const response = await axios.post(`${BASEURL}/send-sms-low-balance`,{}, { withCredentials: true });
       setMessage(response.data.message || "SMS sent to customers with low balance");
     } catch (error) {
       setMessage(error.response?.data?.error || "Error sending SMS");
@@ -96,7 +96,8 @@ function DebtManager() {
       const response = await axios.post(
         `${BASEURL}/send-sms-custom-balance-detailed`,
         { balance: Number(balanceAmount), message: customMessage },
-        { withCredentials: true }
+      
+      { withCredentials: true }
       );
       setMessage(response.data.message || `Custom SMS sent to customers with balance above ${balanceAmount}`);
       setBalanceAmount("");
