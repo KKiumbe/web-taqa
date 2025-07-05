@@ -12,7 +12,7 @@ import CustomersScreen from "./pages/customers/Customers";
 import CustomerDetails from "./pages/customers/CustomerDetails.jsx";
 import Receipts from "./pages/payments/receipts.jsx";
 import ReceiptDetail from "./pages/payments/receiptDetails.jsx";
-import CustomerEditScreen from "./pages/customers/editCustomers.jsx";
+import CustomerEditScreen from "./pages/customers/EditCustomers.jsx";
 import VerifyOtpScreen from "./pages/auth/VerifyOtpScreen.jsx";
 import HomeScreen from "./pages/home/home.jsx";
 import SmsScreen from "./pages/sms/sendSMS.jsx";
