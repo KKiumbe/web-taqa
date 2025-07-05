@@ -8,7 +8,7 @@ import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 
 
 import PaymentDetails from "./pages/payments/PaymentDetail.jsx";
-import CustomersScreen from "./pages/customers/customers.jsx";
+import CustomersScreen from "./pages/customers/Customers";
 import CustomerDetails from "./pages/customers/CustomerDetails.jsx";
 import Receipts from "./pages/payments/receipts.jsx";
 import ReceiptDetail from "./pages/payments/receiptDetails.jsx";
