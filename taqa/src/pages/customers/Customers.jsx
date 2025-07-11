@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import axios from "axios";
 import {
   DataGrid,
@@ -31,10 +31,14 @@ const CustomersScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-
+    const [ setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  })
   // Pagination State
   const [page, setPage] = useState(0); // MUI uses 0-based index
   const [pageSize, setPageSize] = useState(10);
@@ -64,13 +68,26 @@ const CustomersScreen = () => {
       setCustomers(customers);
       setTotalCustomers(total);
       setSearchResults(customers);
-    } catch (err) {
-      if (err.response?.status === 401) {
+    } 
+    
+      
+    catch (error) {
+      if (error.response?.status === 401) {
         navigate("/login");
-      } else {
-        setError("Failed to fetch customers");
       }
-    } finally {
+      else if (error.response?.status === 402) {
+        setSnackbar({
+          open: true,
+          message: error.response.data?.error || 
+                   'Feature disabled due to non-payment of the service.',
+          severity: 'warning',
+        });
+        setSnackbarMessage("Error searching customers.");
+        setSnackbarOpen(true);
+      }
+    }
+    
+    finally {
       setLoading(false);
     }
   };
@@ -98,11 +115,25 @@ const CustomersScreen = () => {
       });
 
       setSearchResults(response.data);
-    } catch (error) {
-      console.error("Error searching customers:", error);
-      setSnackbarMessage("Error searching customers.");
-      setSnackbarOpen(true);
-    } finally {
+    }
+    
+     
+    catch (error) {
+      if (error.response?.status === 401) {
+        navigate("/login");
+      }
+      else if (error.response?.status === 402) {
+        setSnackbar({
+          open: true,
+          message: error.response.data?.error || 
+                   'Feature disabled due to non-payment of the service.',
+          severity: 'warning',
+        });
+        setSnackbarMessage("Error searching customers.");
+        setSnackbarOpen(true);
+      }
+    }
+    finally {
       setIsSearching(false);
     }
   };

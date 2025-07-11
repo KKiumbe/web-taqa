@@ -96,59 +96,84 @@ const Payments = () => {
     setError(null);
   };
 
-  const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const endpoint = unreceiptedOnly ? `${BASEURL}/payments/unreceipted` : `${BASEURL}/payments`;
-      const params = { page: page + 1, limit: pageSize };
-      if (mode !== "all") params.mode = mode;
+const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
+  setLoading(true);
+  setError(null);
+  setOpenSnackbar(false); // Reset snackbar
+  try {
+    const endpoint = unreceiptedOnly ? `${BASEURL}/payments/unreceipted` : `${BASEURL}/payments`;
+    const params = { page: page + 1, limit: pageSize };
+    if (mode !== "all") params.mode = mode;
 
-      const response = await axios.get(endpoint, { params, withCredentials: true });
-      const { payments: fetchedPayments, total } = response.data;
-      const flattenedData = flattenPayments(fetchedPayments || []);
-      setPayments(flattenedData);
-      setRowCount(total || 0);
-      //console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
-    } catch (err) {
-      setError(
-        err.response?.status === 404
-          ? "User not found"
-          : err.response?.data?.error || "Failed to fetch payments."
-      );
+    const response = await axios.get(endpoint, { params, withCredentials: true });
+    const { payments: fetchedPayments, total } = response.data;
+    const flattenedData = flattenPayments(fetchedPayments || []);
+    setPayments(flattenedData);
+    setRowCount(total || 0);
+  } catch (err) {
+    if (err.response?.status === 401) {
+      navigate("/login");
+    } else if (err.response?.status === 402) {
       setOpenSnackbar(true);
-      setPayments([]);
-      setRowCount(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPaymentsByName = async (page, pageSize, query) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(`${BASEURL}/payments/search-by-name`, {
-        params: { name: query, page: page + 1, limit: pageSize },
-        withCredentials: true,
+      setError({
+        message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
+        severity: "warning",
       });
-      const { payments: fetchedPayments, total } = response.data;
-      const flattenedData = flattenPayments(fetchedPayments || []);
-      setPayments(flattenedData);
-      setRowCount(total || 0);
-    } catch (err) {
-      setError(
-        err.response?.status === 404
-          ? "User not found"
-          : err.response?.data?.error || "Failed to search payments by name."
-      );
+    } else {
       setOpenSnackbar(true);
-      setPayments([]);
-      setRowCount(0);
-    } finally {
-      setLoading(false);
+      setError({
+        message:
+          err.response?.status === 404
+            ? "User not found"
+            : err.response?.data?.error || "Failed to fetch payments.",
+        severity: "error",
+      });
     }
-  };
+    setPayments([]);
+    setRowCount(0);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const fetchPaymentsByName = async (page, pageSize, query) => {
+  setLoading(true);
+  setError(null);
+  setOpenSnackbar(false); // Reset snackbar
+  try {
+    const response = await axios.get(`${BASEURL}/payments/search-by-name`, {
+      params: { name: query, page: page + 1, limit: pageSize },
+      withCredentials: true,
+    });
+    const { payments: fetchedPayments, total } = response.data;
+    const flattenedData = flattenPayments(fetchedPayments || []);
+    setPayments(flattenedData);
+    setRowCount(total || 0);
+  } catch (err) {
+    if (err.response?.status === 401) {
+      navigate("/login"); // Redirect to login for unauthorized access
+    } else if (err.response?.status === 402) {
+      setOpenSnackbar(true);
+      setError({
+        message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+    } else {
+      setOpenSnackbar(true);
+      setError({
+        message:
+          err.response?.status === 404
+            ? "User not found"
+            : err.response?.data?.error || "Failed to search payments by name.",
+        severity: "error",
+      });
+    }
+    setPayments([]);
+    setRowCount(0);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchPaymentByTransactionId = async (page, pageSize, query) => {
     setLoading(true);
@@ -162,13 +187,27 @@ const Payments = () => {
       const flattenedData = flattenPayments([transaction]);
       setPayments(flattenedData);
       setRowCount(1);
-    } catch (err) {
-      setError(
-        err.response?.status === 404
-          ? "User not found"
-          : err.response?.data?.error || "Failed to search payment by transaction ID."
-      );
+  
+} catch (err) {
+    if (err.response?.status === 401) {
+      navigate("/login"); // Redirect to login for unauthorized access
+    } else if (err.response?.status === 402) {
       setOpenSnackbar(true);
+      setError({
+        message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+    } else {
+      setOpenSnackbar(true);
+      setError({
+        message:
+          err.response?.status === 404
+            ? "Record not found"
+            : err.response?.data?.error || "Failed to search payments by trasaction id.",
+        severity: "error",
+      });
+    }
+
       setPayments([]);
       setRowCount(0);
     } finally {
@@ -190,13 +229,30 @@ const Payments = () => {
       setRowCount(total || 0);
 
       //console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
-    } catch (err) {
-      setError(
-        err.response?.status === 404
-          ? "User not found"
-          : err.response?.data?.error || "Failed to search payments by ref number."
-      );
+   
+} catch (err) {
+    if (err.response?.status === 401) {
+      navigate("/login"); // Redirect to login for unauthorized access
+    } else if (err.response?.status === 402) {
       setOpenSnackbar(true);
+      setError({
+        message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+    } else {
+      setOpenSnackbar(true);
+      setError({
+        message:
+          err.response?.status === 404
+            ? "User not found"
+            : err.response?.data?.error || "Failed to search payments by Ref.",
+        severity: "error",
+      });
+    }
+
+    
+
+
       setPayments([]);
       setRowCount(0);
     } finally {
