@@ -626,8 +626,8 @@ const Payments = () => {
           sx={{ width: "100%" }}
           action={
             error?.severity === "warning" ? (
-              <Button color="inherit" size="small" component={Link} to="/billing">
-                Pay Now
+              <Button color="inherit" size="small" component={Link} to="/">
+               
               </Button>
             ) : null
           }
