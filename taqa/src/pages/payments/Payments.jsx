@@ -66,29 +66,51 @@ const Payments = () => {
   const [searchType, setSearchType] = useState("name");
   const [modeFilter, setModeFilter] = useState("all");
   const [showUnreceiptedOnly, setShowUnreceiptedOnly] = useState(false);
+  const [tenantStatus, setTenantStatus] = useState(null);
 
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
   const theme = getTheme();
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
+  // Fetch tenant status
+  const fetchTenantStatus = async () => {
+    try {
+      const response = await axios.get(`${BASEURL}/tenant-status`, {
+        withCredentials: true,
+      });
+      setTenantStatus(response.data.status);
+    } catch (err) {
+      setTenantStatus("EXPIRED"); // Default to EXPIRED on error to prevent unauthorized access
+      setError({
+        message: err.response?.data?.error || "Failed to fetch tenant status.",
+        severity: "error",
+      });
+      setOpenSnackbar(true);
+    }
+  };
+
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");
+    } else {
+      fetchTenantStatus();
     }
   }, [currentUser, navigate]);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && tenantStatus === "ACTIVE" && !searchQuery) {
       fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
+    } else if (tenantStatus === "EXPIRED" || tenantStatus === "DISABLED") {
+      setError({
+        message: "Feature disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+      setOpenSnackbar(true);
+      setPayments([]);
+      setRowCount(0);
     }
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (currentUser && !searchQuery) {
-      fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
-    }
-  }, [paginationModel, modeFilter, showUnreceiptedOnly, currentUser]);
+  }, [paginationModel, modeFilter, showUnreceiptedOnly, currentUser, tenantStatus]);
 
   const handleCloseSnackbar = (event, reason) => {
     if (reason === "clickaway") return;
@@ -97,6 +119,18 @@ const Payments = () => {
   };
 
   const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
+    if (tenantStatus !== "ACTIVE") {
+      setError({
+        message: "Feature disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+      setOpenSnackbar(true);
+      setPayments([]);
+      setRowCount(0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setOpenSnackbar(false);
@@ -114,20 +148,21 @@ const Payments = () => {
       if (err.response?.status === 401) {
         navigate("/login");
       } else if (err.response?.status === 402) {
-        setOpenSnackbar(true);
+        setTenantStatus(err.response.data.status || "EXPIRED");
         setError({
           message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
           severity: "warning",
         });
-      } else {
         setOpenSnackbar(true);
+      } else {
         setError({
           message:
             err.response?.status === 404
-              ? "User not found"
+              ? "Record not found"
               : err.response?.data?.error || "Failed to fetch payments.",
           severity: "error",
         });
+        setOpenSnackbar(true);
       }
       setPayments([]);
       setRowCount(0);
@@ -137,6 +172,18 @@ const Payments = () => {
   };
 
   const fetchPaymentsByName = async (page, pageSize, query) => {
+    if (tenantStatus !== "ACTIVE") {
+      setError({
+        message: "Feature disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+      setOpenSnackbar(true);
+      setPayments([]);
+      setRowCount(0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setOpenSnackbar(false);
@@ -153,20 +200,21 @@ const Payments = () => {
       if (err.response?.status === 401) {
         navigate("/login");
       } else if (err.response?.status === 402) {
-        setOpenSnackbar(true);
+        setTenantStatus(err.response.data.status || "EXPIRED");
         setError({
           message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
           severity: "warning",
         });
-      } else {
         setOpenSnackbar(true);
+      } else {
         setError({
           message:
             err.response?.status === 404
-              ? "User not found"
+              ? "Record not found"
               : err.response?.data?.error || "Failed to search payments by name.",
           severity: "error",
         });
+        setOpenSnackbar(true);
       }
       setPayments([]);
       setRowCount(0);
@@ -176,6 +224,18 @@ const Payments = () => {
   };
 
   const fetchPaymentByTransactionId = async (page, pageSize, query) => {
+    if (tenantStatus !== "ACTIVE") {
+      setError({
+        message: "Feature disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+      setOpenSnackbar(true);
+      setPayments([]);
+      setRowCount(0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setOpenSnackbar(false);
@@ -192,13 +252,13 @@ const Payments = () => {
       if (err.response?.status === 401) {
         navigate("/login");
       } else if (err.response?.status === 402) {
-        setOpenSnackbar(true);
+        setTenantStatus(err.response.data.status || "EXPIRED");
         setError({
           message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
           severity: "warning",
         });
-      } else {
         setOpenSnackbar(true);
+      } else {
         setError({
           message:
             err.response?.status === 404
@@ -206,6 +266,7 @@ const Payments = () => {
               : err.response?.data?.error || "Failed to search payments by transaction ID.",
           severity: "error",
         });
+        setOpenSnackbar(true);
       }
       setPayments([]);
       setRowCount(0);
@@ -215,6 +276,18 @@ const Payments = () => {
   };
 
   const fetchPaymentsByRef = async (page, pageSize, query) => {
+    if (tenantStatus !== "ACTIVE") {
+      setError({
+        message: "Feature disabled due to non-payment of the service.",
+        severity: "warning",
+      });
+      setOpenSnackbar(true);
+      setPayments([]);
+      setRowCount(0);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setOpenSnackbar(false);
@@ -231,20 +304,21 @@ const Payments = () => {
       if (err.response?.status === 401) {
         navigate("/login");
       } else if (err.response?.status === 402) {
-        setOpenSnackbar(true);
+        setTenantStatus(err.response.data.status || "EXPIRED");
         setError({
           message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
           severity: "warning",
         });
-      } else {
         setOpenSnackbar(true);
+      } else {
         setError({
           message:
             err.response?.status === 404
-              ? "User not found"
+              ? "Record not found"
               : err.response?.data?.error || "Failed to search payments by reference number.",
           severity: "error",
         });
+        setOpenSnackbar(true);
       }
       setPayments([]);
       setRowCount(0);
@@ -329,7 +403,7 @@ const Payments = () => {
         if (!params?.value) return "N/A";
         try {
           const date = new Date(params.value);
-          date.setHours(date.getHours() - 1); // Subtract 1 hour to correct time
+          date.setHours(date.getHours() - 1);
           const day = String(date.getDate()).padStart(2, "0");
           const month = date.toLocaleString("default", { month: "short" });
           const year = date.getFullYear();
@@ -550,6 +624,13 @@ const Payments = () => {
           onClose={handleCloseSnackbar}
           severity={error?.severity || "error"}
           sx={{ width: "100%" }}
+          action={
+            error?.severity === "warning" ? (
+              <Button color="inherit" size="small" component={Link} to="/billing">
+                Pay Now
+              </Button>
+            ) : null
+          }
         >
           {error?.message}
         </Alert>
