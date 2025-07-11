@@ -96,88 +96,89 @@ const Payments = () => {
     setError(null);
   };
 
-const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
-  setLoading(true);
-  setError(null);
-  setOpenSnackbar(false); // Reset snackbar
-  try {
-    const endpoint = unreceiptedOnly ? `${BASEURL}/payments/unreceipted` : `${BASEURL}/payments`;
-    const params = { page: page + 1, limit: pageSize };
-    if (mode !== "all") params.mode = mode;
+  const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
+    setLoading(true);
+    setError(null);
+    setOpenSnackbar(false);
+    try {
+      const endpoint = unreceiptedOnly ? `${BASEURL}/payments/unreceipted` : `${BASEURL}/payments`;
+      const params = { page: page + 1, limit: pageSize };
+      if (mode !== "all") params.mode = mode;
 
-    const response = await axios.get(endpoint, { params, withCredentials: true });
-    const { payments: fetchedPayments, total } = response.data;
-    const flattenedData = flattenPayments(fetchedPayments || []);
-    setPayments(flattenedData);
-    setRowCount(total || 0);
-  } catch (err) {
-    if (err.response?.status === 401) {
-      navigate("/login");
-    } else if (err.response?.status === 402) {
-      setOpenSnackbar(true);
-      setError({
-        message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
-        severity: "warning",
-      });
-    } else {
-      setOpenSnackbar(true);
-      setError({
-        message:
-          err.response?.status === 404
-            ? "User not found"
-            : err.response?.data?.error || "Failed to fetch payments.",
-        severity: "error",
-      });
+      const response = await axios.get(endpoint, { params, withCredentials: true });
+      const { payments: fetchedPayments, total } = response.data;
+      const flattenedData = flattenPayments(fetchedPayments || []);
+      setPayments(flattenedData);
+      setRowCount(total || 0);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        navigate("/login");
+      } else if (err.response?.status === 402) {
+        setOpenSnackbar(true);
+        setError({
+          message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
+          severity: "warning",
+        });
+      } else {
+        setOpenSnackbar(true);
+        setError({
+          message:
+            err.response?.status === 404
+              ? "User not found"
+              : err.response?.data?.error || "Failed to fetch payments.",
+          severity: "error",
+        });
+      }
+      setPayments([]);
+      setRowCount(0);
+    } finally {
+      setLoading(false);
     }
-    setPayments([]);
-    setRowCount(0);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const fetchPaymentsByName = async (page, pageSize, query) => {
-  setLoading(true);
-  setError(null);
-  setOpenSnackbar(false); // Reset snackbar
-  try {
-    const response = await axios.get(`${BASEURL}/payments/search-by-name`, {
-      params: { name: query, page: page + 1, limit: pageSize },
-      withCredentials: true,
-    });
-    const { payments: fetchedPayments, total } = response.data;
-    const flattenedData = flattenPayments(fetchedPayments || []);
-    setPayments(flattenedData);
-    setRowCount(total || 0);
-  } catch (err) {
-    if (err.response?.status === 401) {
-      navigate("/login"); // Redirect to login for unauthorized access
-    } else if (err.response?.status === 402) {
-      setOpenSnackbar(true);
-      setError({
-        message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
-        severity: "warning",
+  const fetchPaymentsByName = async (page, pageSize, query) => {
+    setLoading(true);
+    setError(null);
+    setOpenSnackbar(false);
+    try {
+      const response = await axios.get(`${BASEURL}/payments/search-by-name`, {
+        params: { name: query, page: page + 1, limit: pageSize },
+        withCredentials: true,
       });
-    } else {
-      setOpenSnackbar(true);
-      setError({
-        message:
-          err.response?.status === 404
-            ? "User not found"
-            : err.response?.data?.error || "Failed to search payments by name.",
-        severity: "error",
-      });
+      const { payments: fetchedPayments, total } = response.data;
+      const flattenedData = flattenPayments(fetchedPayments || []);
+      setPayments(flattenedData);
+      setRowCount(total || 0);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        navigate("/login");
+      } else if (err.response?.status === 402) {
+        setOpenSnackbar(true);
+        setError({
+          message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
+          severity: "warning",
+        });
+      } else {
+        setOpenSnackbar(true);
+        setError({
+          message:
+            err.response?.status === 404
+              ? "User not found"
+              : err.response?.data?.error || "Failed to search payments by name.",
+          severity: "error",
+        });
+      }
+      setPayments([]);
+      setRowCount(0);
+    } finally {
+      setLoading(false);
     }
-    setPayments([]);
-    setRowCount(0);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const fetchPaymentByTransactionId = async (page, pageSize, query) => {
     setLoading(true);
     setError(null);
+    setOpenSnackbar(false);
     try {
       const response = await axios.get(`${BASEURL}/searchTransactionById`, {
         params: { transactionId: query, page: page + 1, limit: pageSize },
@@ -187,27 +188,25 @@ const fetchPaymentsByName = async (page, pageSize, query) => {
       const flattenedData = flattenPayments([transaction]);
       setPayments(flattenedData);
       setRowCount(1);
-  
-} catch (err) {
-    if (err.response?.status === 401) {
-      navigate("/login"); // Redirect to login for unauthorized access
-    } else if (err.response?.status === 402) {
-      setOpenSnackbar(true);
-      setError({
-        message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
-        severity: "warning",
-      });
-    } else {
-      setOpenSnackbar(true);
-      setError({
-        message:
-          err.response?.status === 404
-            ? "Record not found"
-            : err.response?.data?.error || "Failed to search payments by trasaction id.",
-        severity: "error",
-      });
-    }
-
+    } catch (err) {
+      if (err.response?.status === 401) {
+        navigate("/login");
+      } else if (err.response?.status === 402) {
+        setOpenSnackbar(true);
+        setError({
+          message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
+          severity: "warning",
+        });
+      } else {
+        setOpenSnackbar(true);
+        setError({
+          message:
+            err.response?.status === 404
+              ? "Record not found"
+              : err.response?.data?.error || "Failed to search payments by transaction ID.",
+          severity: "error",
+        });
+      }
       setPayments([]);
       setRowCount(0);
     } finally {
@@ -218,6 +217,7 @@ const fetchPaymentsByName = async (page, pageSize, query) => {
   const fetchPaymentsByRef = async (page, pageSize, query) => {
     setLoading(true);
     setError(null);
+    setOpenSnackbar(false);
     try {
       const response = await axios.get(`${BASEURL}/payments/search-by-phone`, {
         params: { ref: query, page: page + 1, limit: pageSize },
@@ -227,32 +227,25 @@ const fetchPaymentsByName = async (page, pageSize, query) => {
       const flattenedData = flattenPayments(fetchedPayments || []);
       setPayments(flattenedData);
       setRowCount(total || 0);
-
-      //console.log(`this is the payment object ${JSON.stringify(fetchedPayments)}`);
-   
-} catch (err) {
-    if (err.response?.status === 401) {
-      navigate("/login"); // Redirect to login for unauthorized access
-    } else if (err.response?.status === 402) {
-      setOpenSnackbar(true);
-      setError({
-        message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
-        severity: "warning",
-      });
-    } else {
-      setOpenSnackbar(true);
-      setError({
-        message:
-          err.response?.status === 404
-            ? "User not found"
-            : err.response?.data?.error || "Failed to search payments by Ref.",
-        severity: "error",
-      });
-    }
-
-    
-
-
+    } catch (err) {
+      if (err.response?.status === 401) {
+        navigate("/login");
+      } else if (err.response?.status === 402) {
+        setOpenSnackbar(true);
+        setError({
+          message: err.response.data?.error || "Feature disabled due to non-payment of the service.",
+          severity: "warning",
+        });
+      } else {
+        setOpenSnackbar(true);
+        setError({
+          message:
+            err.response?.status === 404
+              ? "User not found"
+              : err.response?.data?.error || "Failed to search payments by reference number.",
+          severity: "error",
+        });
+      }
       setPayments([]);
       setRowCount(0);
     } finally {
@@ -334,22 +327,17 @@ const fetchPaymentsByName = async (page, pageSize, query) => {
       width: 200,
       renderCell: (params) => {
         if (!params?.value) return "N/A";
-    
         try {
           const date = new Date(params.value);
           date.setHours(date.getHours() - 1); // Subtract 1 hour to correct time
-    
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = date.toLocaleString('default', { month: 'short' });
+          const day = String(date.getDate()).padStart(2, "0");
+          const month = date.toLocaleString("default", { month: "short" });
           const year = date.getFullYear();
-    
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const seconds = String(date.getSeconds()).padStart(2, '0');
-    
+          const hours = String(date.getHours()).padStart(2, "0");
+          const minutes = String(date.getMinutes()).padStart(2, "0");
+          const seconds = String(date.getSeconds()).padStart(2, "0");
           return `${day} ${month} ${year}, ${hours}:${minutes}:${seconds}`;
         } catch (error) {
-          //console.error("Invalid Date:", params.value);
           return "Invalid Date";
         }
       },
@@ -404,10 +392,6 @@ const fetchPaymentsByName = async (page, pageSize, query) => {
           "N/A"
         ),
     },
-    
-    
-    
-
     {
       field: "actions",
       headerName: "Actions",
@@ -428,7 +412,6 @@ const fetchPaymentsByName = async (page, pageSize, query) => {
   return (
     <Box sx={{ p: 3 }}>
       <TitleComponent title="Payments" />
-
       <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
         <FormControl sx={{ minWidth: 150 }}>
           <InputLabel id="search-type-label">Search By</InputLabel>
@@ -563,8 +546,12 @@ const fetchPaymentsByName = async (page, pageSize, query) => {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: "100%" }}>
-          {error}
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={error?.severity || "error"}
+          sx={{ width: "100%" }}
+        >
+          {error?.message}
         </Alert>
       </Snackbar>
     </Box>
