@@ -363,8 +363,8 @@ const CustomersScreen = () => {
           sx={{ width: "100%" }}
           action={
             snackbar.severity === "warning" ? (
-              <Button color="inherit" size="small" component={Link} to="/billing">
-                Pay Now
+              <Button color="inherit" size="small" component={Link} to="/">
+               
               </Button>
             ) : null
           }
