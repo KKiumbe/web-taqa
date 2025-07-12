@@ -12,7 +12,7 @@ export const useTenantStore = create((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await axios.get(`${BASEURL}/tenant-status`, {
+      const response = await axios.get(`${BASEURL}/tenant/status`, {
         withCredentials: true,
       });
       const status = response.data.status;
