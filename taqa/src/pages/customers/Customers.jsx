@@ -34,7 +34,7 @@ const CustomersScreen = () => {
     message: "",
     severity: "success",
   });
-  const [tenantStatus, setTenantStatus] = useState(null);
+  const [tenantStatus, setTenantStatus] = useState('ACTIVE');
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
