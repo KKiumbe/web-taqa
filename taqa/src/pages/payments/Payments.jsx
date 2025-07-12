@@ -66,7 +66,7 @@ const Payments = () => {
   const [searchType, setSearchType] = useState("name");
   const [modeFilter, setModeFilter] = useState("all");
   const [showUnreceiptedOnly, setShowUnreceiptedOnly] = useState(false);
-  const [tenantStatus, setTenantStatus] = useState(null);
+  const [tenantStatus, setTenantStatus] = useState("ACTIVE");
 
   const currentUser = useAuthStore((state) => state.currentUser);
   const navigate = useNavigate();
