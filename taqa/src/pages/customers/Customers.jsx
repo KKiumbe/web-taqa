@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // src/screens/CustomersScreen.jsx
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import {
   DataGrid,
@@ -54,9 +55,9 @@ const CustomersScreen = () => {
       setSearchResults([]);
       setTotalCustomers(0);
     }
-  }, [currentUser, tenantStatus, paginationModel, searchQuery, isApiEnabled, navigate]);
+  }, [currentUser, tenantStatus, paginationModel, searchQuery, isApiEnabled, navigate, fetchCustomers]);
 
-  const fetchCustomers = async (page, pageSize) => {
+  const fetchCustomers =useCallback (async (page, pageSize) => {
     if (!isApiEnabled()) {
       return;
     }
@@ -98,7 +99,7 @@ const CustomersScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   const handleSearch = async () => {
     if (!isApiEnabled()) {

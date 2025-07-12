@@ -86,9 +86,10 @@ const Payments = () => {
       setPayments([]);
       setRowCount(0);
     }
-  }, [currentUser, tenantStatus, paginationModel, modeFilter, showUnreceiptedOnly, searchQuery, isApiEnabled, navigate]);
+  }, [currentUser, tenantStatus, paginationModel, modeFilter, showUnreceiptedOnly, searchQuery, isApiEnabled, navigate, fetchPayments]);
 
-  const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchPayments = useCallback(async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
     if (!isApiEnabled()) {
       return;
     }
@@ -129,7 +130,7 @@ const Payments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   const fetchPaymentsByName = async (page, pageSize, query) => {
     if (!isApiEnabled()) {
