@@ -77,16 +77,7 @@ const Payments = () => {
   const theme = getTheme();
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
-  useEffect(() => {
-    if (!currentUser) {
-      navigate("/login");
-    } else if (isApiEnabled() && !searchQuery) {
-      fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
-    } else if (!isApiEnabled()) {
-      setPayments([]);
-      setRowCount(0);
-    }
-  }, [currentUser, tenantStatus, paginationModel, modeFilter, showUnreceiptedOnly, searchQuery, isApiEnabled, navigate, fetchPayments]);
+
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchPayments = useCallback(async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
@@ -132,7 +123,8 @@ const Payments = () => {
     }
   });
 
-  const fetchPaymentsByName = async (page, pageSize, query) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchPaymentsByName = useCallback(async (page, pageSize, query) => {
     if (!isApiEnabled()) {
       return;
     }
@@ -172,9 +164,10 @@ const Payments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
-  const fetchPaymentByTransactionId = async (page, pageSize, query) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchPaymentByTransactionId = useCallback( async (page, pageSize, query) => {
     if (!isApiEnabled()) {
       return;
     }
@@ -214,9 +207,10 @@ const Payments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
-  const fetchPaymentsByRef = async (page, pageSize, query) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchPaymentsByRef = useCallback(async (page, pageSize, query) => {
     if (!isApiEnabled()) {
       return;
     }
@@ -256,7 +250,19 @@ const Payments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  });
+
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/login");
+    } else if (isApiEnabled() && !searchQuery) {
+      fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
+    } else if (!isApiEnabled()) {
+      setPayments([]);
+      setRowCount(0);
+    }
+  }, [currentUser, tenantStatus, paginationModel, modeFilter, showUnreceiptedOnly, searchQuery, isApiEnabled, navigate, fetchPayments]);
+
 
   const handleEditPress = (id) => {
     if (isApiEnabled()) {
@@ -298,7 +304,7 @@ const Payments = () => {
           break;
       }
     }
-  }, [searchQuery, searchType, modeFilter, showUnreceiptedOnly, paginationModel.pageSize, isApiEnabled]);
+  }, [searchQuery, isApiEnabled, fetchPayments, paginationModel.pageSize, modeFilter, showUnreceiptedOnly, searchType, fetchPaymentsByName, fetchPaymentByTransactionId, fetchPaymentsByRef]);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") handleSearch();

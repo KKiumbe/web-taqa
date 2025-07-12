@@ -45,17 +45,8 @@ const CustomersScreen = () => {
   const theme = getTheme();
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
-  useEffect(() => {
-    if (!currentUser) {
-      navigate("/login");
-    } else if (isApiEnabled() && !searchQuery) {
-      fetchCustomers(paginationModel.page, paginationModel.pageSize);
-    } else if (!isApiEnabled()) {
-      setCustomers([]);
-      setSearchResults([]);
-      setTotalCustomers(0);
-    }
-  }, [currentUser, tenantStatus, paginationModel, searchQuery, isApiEnabled, navigate, fetchCustomers]);
+
+
 
   const fetchCustomers =useCallback (async (page, pageSize) => {
     if (!isApiEnabled()) {
@@ -151,6 +142,21 @@ const CustomersScreen = () => {
       setIsSearching(false);
     }
   };
+
+
+
+    useEffect(() => {
+    if (!currentUser) {
+      navigate("/login");
+    } else if (isApiEnabled() && !searchQuery) {
+      fetchCustomers(paginationModel.page, paginationModel.pageSize);
+    } else if (!isApiEnabled()) {
+      setCustomers([]);
+      setSearchResults([]);
+      setTotalCustomers(0);
+    }
+  }, [currentUser, tenantStatus, paginationModel, searchQuery, isApiEnabled, navigate, fetchCustomers]);
+
 
   const handleCloseSnackbar = (event, reason) => {
     if (reason === "clickaway") return;
