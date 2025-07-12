@@ -42,11 +42,23 @@ import InvoiceDetails from "./pages/invoices/InvoiceDetail.jsx";
 import Payments from "./pages/payments/Payments.jsx";
 import CreateInvoice from './pages/invoices/CreateInvoice.jsx'
 import Login from "./pages/auth/Login.jsx";
+import { useTenantStore } from "./store/tenantStatus.js";
+import { useEffect } from "react";
 
 const App = () => {
   const { darkMode } = useThemeStore();
   const { isAuthenticated } = useAuthStore();
   const theme = getTheme(darkMode ? "dark" : "light");
+
+
+ const currentUser = useAuthStore((state) => state.currentUser);
+  const fetchTenantStatus = useTenantStore((state) => state.fetchTenantStatus);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchTenantStatus();
+    }
+  }, [currentUser, fetchTenantStatus]);
 
   return (
     <ThemeProvider theme={theme}>

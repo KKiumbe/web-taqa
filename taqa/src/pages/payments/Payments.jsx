@@ -1,3 +1,4 @@
+// src/screens/Payments.jsx
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import {
@@ -24,10 +25,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
+
 import TitleComponent from "../../components/title";
 import { getTheme } from "../../store/theme";
+import { useTenantStore } from "../../store/tenantStatus";
 
-// Flatten nested payment response
 const flattenPayments = (payments) => {
   if (!Array.isArray(payments)) {
     console.error("Payments data is not an array:", payments);
@@ -59,92 +61,39 @@ const flattenPayments = (payments) => {
 const Payments = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  //const [openSnackbar, setOpenSnackbar] = useState(false);
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
-  });
-
-    const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
   });
   const [rowCount, setRowCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState("name");
   const [modeFilter, setModeFilter] = useState("all");
   const [showUnreceiptedOnly, setShowUnreceiptedOnly] = useState(false);
-  const [tenantStatus, setTenantStatus] = useState("ACTIVE"); // Assume active by default
 
   const currentUser = useAuthStore((state) => state.currentUser);
+  const { tenantStatus, error, isApiEnabled, clearError } = useTenantStore();
   const navigate = useNavigate();
   const theme = getTheme();
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
-  // Helper function to check if API calls are allowed
-  const isApiEnabled = () => tenantStatus === "ACTIVE";
-
-  // Show warning if tenant is inactive
-  const showInactiveWarning = () => {
-    setSnackbar({
-      open: true,
-      message: "Feature disabled due to non-payment of the service.",
-      severity: "warning",
-    });
-  
-    setPayments([]);
-    setRowCount(0);
-    setLoading(false);
-  };
-
-  // Fetch tenant status
-  const fetchTenantStatus = async () => {
-    try {
-      const response = await axios.get(`${BASEURL}/tenant-status`, {
-        withCredentials: true,
-      });
-      setTenantStatus(response.data.status);
-    } catch (err) {
-      console.error("fetchTenantStatus error:", err);
-      if (err.response?.status === 402) {
-        setTenantStatus(err.response.data.status || "EXPIRED");
-      }
-       setSnackbar({
-        open: true,
-        message: err.response?.data?.error || "Failed to fetch status.",
-        severity: "error",
-      });
-     
-    }
-  };
-
   useEffect(() => {
     if (!currentUser) {
       navigate("/login");
-    } else {
-      fetchTenantStatus();
-    }
-  }, [currentUser, navigate]);
-
-  useEffect(() => {
-    if (currentUser && isApiEnabled() && !searchQuery) {
+    } else if (isApiEnabled() && !searchQuery) {
       fetchPayments(paginationModel.page, paginationModel.pageSize, modeFilter, showUnreceiptedOnly);
     } else if (!isApiEnabled()) {
-      showInactiveWarning();
+      setPayments([]);
+      setRowCount(0);
     }
-  }, [currentUser, tenantStatus, paginationModel, modeFilter, showUnreceiptedOnly, searchQuery]);
+  }, [currentUser, tenantStatus, paginationModel, modeFilter, showUnreceiptedOnly, searchQuery, isApiEnabled, navigate]);
 
   const fetchPayments = async (page, pageSize, mode = "all", unreceiptedOnly = false) => {
     if (!isApiEnabled()) {
-      showInactiveWarning();
       return;
     }
 
     setLoading(true);
-    setSnackbar({ open: false, message: "", severity: "success" });
-   
     try {
       const endpoint = unreceiptedOnly ? `${BASEURL}/payments/unreceipted` : `${BASEURL}/payments`;
       const params = { page: page + 1, limit: pageSize };
@@ -159,19 +108,21 @@ const Payments = () => {
       console.error("fetchPayments error:", err);
       if (err.response?.status === 401) {
         navigate("/login");
-      } else if (err.response?.status === 402) {
-        setTenantStatus(err.response.data.status || "EXPIRED");
-        showInactiveWarning();
       } else {
-          setSnackbar({
-          open: true,
-          message:
-            err.response?.status === 404
-              ? "Record not found"
-              : err.response?.data?.error || "Failed to fetch payments.",
-          severity: "error",
+        useTenantStore.setState({
+          error: {
+            message:
+              err.response?.status === 402
+                ? "Feature disabled due to non-payment of the service."
+                : err.response?.status === 404
+                ? "Record not found"
+                : err.response?.data?.error || "Failed to fetch payments.",
+            severity: err.response?.status === 402 ? "warning" : "error",
+          },
         });
-       
+        if (err.response?.status === 402) {
+          useTenantStore.setState({ tenantStatus: err.response.data.status || "EXPIRED" });
+        }
       }
       setPayments([]);
       setRowCount(0);
@@ -182,13 +133,10 @@ const Payments = () => {
 
   const fetchPaymentsByName = async (page, pageSize, query) => {
     if (!isApiEnabled()) {
-      showInactiveWarning();
       return;
     }
 
     setLoading(true);
-    setSnackbar({ open: false, message: "", severity: "success" });
-   
     try {
       const response = await axios.get(`${BASEURL}/payments/search-by-name`, {
         params: { name: query, page: page + 1, limit: pageSize },
@@ -202,19 +150,21 @@ const Payments = () => {
       console.error("fetchPaymentsByName error:", err);
       if (err.response?.status === 401) {
         navigate("/login");
-      } else if (err.response?.status === 402) {
-        setTenantStatus(err.response.data.status || "EXPIRED");
-        showInactiveWarning();
       } else {
-    setSnackbar({
-          open: true,
-          message:
-            err.response?.status === 404
-              ? "Record not found"
-              : err.response?.data?.error || "Failed to search payments by name.",
-          severity: "error",
+        useTenantStore.setState({
+          error: {
+            message:
+              err.response?.status === 402
+                ? "Feature disabled due to non-payment of the service."
+                : err.response?.status === 404
+                ? "Record not found"
+                : err.response?.data?.error || "Failed to search payments by name.",
+            severity: err.response?.status === 402 ? "warning" : "error",
+          },
         });
-      
+        if (err.response?.status === 402) {
+          useTenantStore.setState({ tenantStatus: err.response.data.status || "EXPIRED" });
+        }
       }
       setPayments([]);
       setRowCount(0);
@@ -225,13 +175,10 @@ const Payments = () => {
 
   const fetchPaymentByTransactionId = async (page, pageSize, query) => {
     if (!isApiEnabled()) {
-      showInactiveWarning();
       return;
     }
 
     setLoading(true);
-     setSnackbar({ open: false, message: "", severity: "success" });
-   
     try {
       const response = await axios.get(`${BASEURL}/searchTransactionById`, {
         params: { transactionId: query, page: page + 1, limit: pageSize },
@@ -245,19 +192,21 @@ const Payments = () => {
       console.error("fetchPaymentByTransactionId error:", err);
       if (err.response?.status === 401) {
         navigate("/login");
-      } else if (err.response?.status === 402) {
-        setTenantStatus(err.response.data.status || "EXPIRED");
-        showInactiveWarning();
       } else {
-     setSnackbar({
-          open: true,
-          message:
-            err.response?.status === 404
-              ? "Record not found"
-              : err.response?.data?.error || "Failed to search payments by Trasaction Id.",
-          severity: "error",
+        useTenantStore.setState({
+          error: {
+            message:
+              err.response?.status === 402
+                ? "Feature disabled due to non-payment of the service."
+                : err.response?.status === 404
+                ? "Record not found"
+                : err.response?.data?.error || "Failed to search payments by transaction ID.",
+            severity: err.response?.status === 402 ? "warning" : "error",
+          },
         });
-     
+        if (err.response?.status === 402) {
+          useTenantStore.setState({ tenantStatus: err.response.data.status || "EXPIRED" });
+        }
       }
       setPayments([]);
       setRowCount(0);
@@ -268,13 +217,10 @@ const Payments = () => {
 
   const fetchPaymentsByRef = async (page, pageSize, query) => {
     if (!isApiEnabled()) {
-      showInactiveWarning();
       return;
     }
 
     setLoading(true);
-     setSnackbar({ open: false, message: "", severity: "success" });
-   
     try {
       const response = await axios.get(`${BASEURL}/payments/search-by-phone`, {
         params: { ref: query, page: page + 1, limit: pageSize },
@@ -288,19 +234,21 @@ const Payments = () => {
       console.error("fetchPaymentsByRef error:", err);
       if (err.response?.status === 401) {
         navigate("/login");
-      } else if (err.response?.status === 402) {
-        setTenantStatus(err.response.data.status || "EXPIRED");
-        showInactiveWarning();
       } else {
-      setSnackbar({
-          open: true,
-          message:
-            err.response?.status === 404
-              ? "Record not found"
-              : err.response?.data?.error || "Failed to search payments by Ref.",
-          severity: "error",
+        useTenantStore.setState({
+          error: {
+            message:
+              err.response?.status === 402
+                ? "Feature disabled due to non-payment of the service."
+                : err.response?.status === 404
+                ? "Record not found"
+                : err.response?.data?.error || "Failed to search payments by reference number.",
+            severity: err.response?.status === 402 ? "warning" : "error",
+          },
         });
-     
+        if (err.response?.status === 402) {
+          useTenantStore.setState({ tenantStatus: err.response.data.status || "EXPIRED" });
+        }
       }
       setPayments([]);
       setRowCount(0);
@@ -312,8 +260,6 @@ const Payments = () => {
   const handleEditPress = (id) => {
     if (isApiEnabled()) {
       navigate(`/payments/${id}`);
-    } else {
-      showInactiveWarning();
     }
   };
 
@@ -350,10 +296,8 @@ const Payments = () => {
         default:
           break;
       }
-    } else {
-      showInactiveWarning();
     }
-  }, [searchQuery, searchType, modeFilter, showUnreceiptedOnly, paginationModel.pageSize, tenantStatus]);
+  }, [searchQuery, searchType, modeFilter, showUnreceiptedOnly, paginationModel.pageSize, isApiEnabled]);
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") handleSearch();
@@ -364,17 +308,10 @@ const Payments = () => {
       const newValue = !prev;
       if (isApiEnabled()) {
         fetchPayments(0, paginationModel.pageSize, modeFilter, newValue);
-      } else {
-        showInactiveWarning();
       }
       return newValue;
     });
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  };
-
-    const handleCloseSnackbar = (event, reason) => {
-    if (reason === "clickaway") return;
-    setSnackbar({ open: false, message: "", severity: "success" });
   };
 
   const columns = [
@@ -602,7 +539,7 @@ const Payments = () => {
             "& .MuiDataGrid-cell": { color: theme.palette.grey[100] },
             ml: "auto",
             mr: "auto",
-            maxWidth: 1400, // Consistent with CustomersScreen
+            maxWidth: 1400,
             minWidth: 900,
             height: 500,
           }}
@@ -622,24 +559,24 @@ const Payments = () => {
       )}
 
       <Snackbar
-        open={snackbar.open}
+        open={!!error}
         autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        onClose={clearError}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
+          onClose={clearError}
+          severity={error?.severity || "error"}
           sx={{ width: "100%" }}
           action={
-            snackbar.severity === "warning" ? (
+            error?.severity === "warning" ? (
               <Button color="inherit" size="small" component={Link} to="/">
                 Go to Home
               </Button>
             ) : null
           }
         >
-          {snackbar.message}
+          {error?.message}
         </Alert>
       </Snackbar>
     </Box>
