@@ -34,7 +34,7 @@ const CustomersScreen = () => {
     message: "",
     severity: "success",
   });
-  const [tenantStatus, setTenantStatus] = useState("ACTIVE");
+  const [tenantStatus, setTenantStatus] = useState("ACTIVE"); // Assume active by default
   const [paginationModel, setPaginationModel] = useState({
     page: 0,
     pageSize: 10,
@@ -46,6 +46,22 @@ const CustomersScreen = () => {
   const theme = getTheme();
   const BASEURL = import.meta.env.VITE_BASE_URL || "https://taqa.co.ke/api";
 
+  // Helper function to check if API calls are allowed
+  const isApiEnabled = () => tenantStatus === "ACTIVE";
+
+  // Show warning if tenant is inactive
+  const showInactiveWarning = () => {
+    setSnackbar({
+      open: true,
+      message: "Feature disabled due to non-payment of the service.",
+      severity: "warning",
+    });
+    setCustomers([]);
+    setSearchResults([]);
+    setTotalCustomers(0);
+    setLoading(false);
+  };
+
   // Fetch tenant status
   const fetchTenantStatus = async () => {
     try {
@@ -54,7 +70,10 @@ const CustomersScreen = () => {
       });
       setTenantStatus(response.data.status);
     } catch (err) {
-      setTenantStatus("EXPIRED"); // Default to EXPIRED on error to prevent unauthorized access
+      // Only update tenantStatus if the error explicitly indicates tenant status
+      if (err.response?.status === 402) {
+        setTenantStatus(err.response.data.status || "EXPIRED");
+      }
       setSnackbar({
         open: true,
         message: err.response?.data?.error || "Failed to fetch tenant status.",
@@ -72,31 +91,16 @@ const CustomersScreen = () => {
   }, [currentUser, navigate]);
 
   useEffect(() => {
-    if (currentUser && tenantStatus === "ACTIVE" && !searchQuery) {
+    if (currentUser && isApiEnabled() && !searchQuery) {
       fetchCustomers(paginationModel.page, paginationModel.pageSize);
-    } else if (tenantStatus === "EXPIRED" || tenantStatus === "DISABLED") {
-      setSnackbar({
-        open: true,
-        message: "Feature disabled due to non-payment of the service.",
-        severity: "warning",
-      });
-      setCustomers([]);
-      setSearchResults([]);
-      setTotalCustomers(0);
+    } else if (!isApiEnabled()) {
+      showInactiveWarning();
     }
-  }, [currentUser, tenantStatus, paginationModel]);
+  }, [currentUser, tenantStatus, paginationModel, searchQuery]);
 
   const fetchCustomers = async (page, pageSize) => {
-    if (tenantStatus !== "ACTIVE") {
-      setSnackbar({
-        open: true,
-        message: "Feature disabled due to non-payment of the service.",
-        severity: "warning",
-      });
-      setCustomers([]);
-      setSearchResults([]);
-      setTotalCustomers(0);
-      setLoading(false);
+    if (!isApiEnabled()) {
+      showInactiveWarning();
       return;
     }
 
@@ -117,13 +121,7 @@ const CustomersScreen = () => {
         navigate("/login");
       } else if (error.response?.status === 402) {
         setTenantStatus(error.response.data.status || "EXPIRED");
-        setSnackbar({
-          open: true,
-          message:
-            error.response.data?.error ||
-            "Feature disabled due to non-payment of the service.",
-          severity: "warning",
-        });
+        showInactiveWarning();
       } else {
         setSnackbar({
           open: true,
@@ -133,24 +131,18 @@ const CustomersScreen = () => {
               : error.response?.data?.error || "Failed to fetch customers.",
           severity: "error",
         });
+        setCustomers([]);
+        setSearchResults([]);
+        setTotalCustomers(0);
       }
-      setCustomers([]);
-      setSearchResults([]);
-      setTotalCustomers(0);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSearch = async () => {
-    if (tenantStatus !== "ACTIVE") {
-      setSnackbar({
-        open: true,
-        message: "Feature disabled due to non-payment of the service.",
-        severity: "warning",
-      });
-      setSearchResults([]);
-      setTotalCustomers(0);
+    if (!isApiEnabled()) {
+      showInactiveWarning();
       setIsSearching(false);
       return;
     }
@@ -180,13 +172,7 @@ const CustomersScreen = () => {
         navigate("/login");
       } else if (error.response?.status === 402) {
         setTenantStatus(error.response.data.status || "EXPIRED");
-        setSnackbar({
-          open: true,
-          message:
-            error.response.data?.error ||
-            "Feature disabled due to non-payment of the service.",
-          severity: "warning",
-        });
+        showInactiveWarning();
       } else {
         setSnackbar({
           open: true,
@@ -196,9 +182,9 @@ const CustomersScreen = () => {
               : error.response?.data?.error || "Failed to search customers.",
           severity: "error",
         });
+        setSearchResults([]);
+        setTotalCustomers(0);
       }
-      setSearchResults([]);
-      setTotalCustomers(0);
     } finally {
       setIsSearching(false);
     }
@@ -219,6 +205,7 @@ const CustomersScreen = () => {
           component={Link}
           to={`/customer-details/${params.row.id}`}
           sx={{ color: theme?.palette?.primary?.main || "green" }}
+          disabled={!isApiEnabled()}
         >
           <VisibilityIcon />
         </IconButton>
@@ -233,6 +220,7 @@ const CustomersScreen = () => {
           component={Link}
           to={`/customer-edit/${params.row.id}`}
           sx={{ color: theme?.palette?.primary?.main || "green" }}
+          disabled={!isApiEnabled()}
         >
           <EditIcon />
         </IconButton>
@@ -277,6 +265,7 @@ const CustomersScreen = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+          disabled={!isApiEnabled()}
         />
         <Button
           variant="contained"
@@ -287,7 +276,7 @@ const CustomersScreen = () => {
             width: "150px",
           }}
           onClick={handleSearch}
-          disabled={isSearching}
+          disabled={isSearching || !isApiEnabled()}
         >
           {isSearching ? "Searching..." : "Search"}
         </Button>
@@ -311,6 +300,7 @@ const CustomersScreen = () => {
             const newPage = Math.max(1, parseInt(e.target.value, 10) || 1) - 1; // Convert to 0-based index
             setPaginationModel((prev) => ({ ...prev, page: newPage }));
           }}
+          disabled={!isApiEnabled()}
         />
       </Box>
 
@@ -364,7 +354,7 @@ const CustomersScreen = () => {
           action={
             snackbar.severity === "warning" ? (
               <Button color="inherit" size="small" component={Link} to="/">
-               
+                Go to Home
               </Button>
             ) : null
           }
