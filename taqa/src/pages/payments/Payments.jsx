@@ -121,7 +121,7 @@ const Payments = () => {
     } finally {
       setLoading(false);
     }
-  });
+  },[BASEURL,isApiEnabled,navigate]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchPaymentsByName = useCallback(async (page, pageSize, query) => {

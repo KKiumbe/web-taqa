@@ -48,49 +48,50 @@ const CustomersScreen = () => {
 
 
 
-  const fetchCustomers =useCallback (async (page, pageSize) => {
-    if (!isApiEnabled()) {
-      return;
-    }
 
-    setLoading(true);
-    try {
-      const response = await axios.get(`${BASEURL}/customers`, {
-        params: { page: page + 1, limit: pageSize },
-        withCredentials: true,
+const fetchCustomers = useCallback(async (page, pageSize) => {
+  if (!isApiEnabled()) {
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const response = await axios.get(`${BASEURL}/customers`, {
+      params: { page: page + 1, limit: pageSize },
+      withCredentials: true,
+    });
+
+    const { customers, total } = response.data;
+    setCustomers(customers);
+    setSearchResults(customers);
+    setTotalCustomers(total || 0);
+  } catch (error) {
+    console.error("fetchCustomers error:", error);
+    if (error.response?.status === 401) {
+      navigate("/login");
+    } else {
+      useTenantStore.setState({
+        error: {
+          message:
+            error.response?.status === 402
+              ? "Feature disabled due to non-payment of the service."
+              : error.response?.status === 404
+              ? "Record not found"
+              : error.response?.data?.error || "Failed to fetch customers.",
+          severity: error.response?.status === 402 ? "warning" : "error",
+        },
       });
-
-      const { customers, total } = response.data;
-      setCustomers(customers);
-      setSearchResults(customers);
-      setTotalCustomers(total || 0);
-    } catch (error) {
-      console.error("fetchCustomers error:", error);
-      if (error.response?.status === 401) {
-        navigate("/login");
-      } else {
-        useTenantStore.setState({
-          error: {
-            message:
-              error.response?.status === 402
-                ? "Feature disabled due to non-payment of the service."
-                : error.response?.status === 404
-                ? "Record not found"
-                : error.response?.data?.error || "Failed to fetch customers.",
-            severity: error.response?.status === 402 ? "warning" : "error",
-          },
-        });
-        if (error.response?.status === 402) {
-          useTenantStore.setState({ tenantStatus: error.response.data.status || "EXPIRED" });
-        }
+      if (error.response?.status === 402) {
+        useTenantStore.setState({ tenantStatus: error.response.data.status || "EXPIRED" });
       }
-      setCustomers([]);
-      setSearchResults([]);
-      setTotalCustomers(0);
-    } finally {
-      setLoading(false);
     }
-  });
+    setCustomers([]);
+    setSearchResults([]);
+    setTotalCustomers(0);
+  } finally {
+    setLoading(false);
+  }
+}, [BASEURL, isApiEnabled, navigate]); // Add dependencies
 
   const handleSearch = async () => {
     if (!isApiEnabled()) {
