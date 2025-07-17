@@ -3,10 +3,6 @@ import { createTheme } from "@mui/material/styles";
 
 
 
-
-
-
-
 export const useThemeStore = create((set) => ({
   darkMode: true, // Default to dark mode
 
